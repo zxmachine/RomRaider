@@ -247,6 +247,9 @@ public class ECUEditorMenuBar extends JMenuBar implements ActionListener {
 			level5.setSelected(true);
 		}
 
+		// table documentation submenu and panel (com.romraider.docs)
+		com.romraider.docs.EditorDocs.addMenu(viewMenu);
+
 		// logger menu items
 		add(loggerMenu);
 		loggerMenu.setMnemonic('L');
