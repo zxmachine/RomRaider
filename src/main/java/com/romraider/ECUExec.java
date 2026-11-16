@@ -46,6 +46,7 @@ import org.apache.log4j.Logger;
 import com.romraider.editor.ecu.ECUEditor;
 import com.romraider.editor.ecu.ECUEditorManager;
 import com.romraider.logger.ecu.EcuLogger;
+import com.romraider.shell.Shell;
 import com.romraider.util.ResourceUtil;
 
 public class ECUExec {
@@ -93,6 +94,7 @@ public class ECUExec {
 
         // set look and feel
         initLookAndFeel();
+        args = Shell.readArgs(args);
         setExecType(args);
 
         // check if already running
@@ -101,7 +103,9 @@ public class ECUExec {
         	EditorLoggerCommunication.sendTypeToOtherExec(args);
         } else {
             // open editor or logger
-            if (containsLoggerArg(args)) {
+            if (Shell.start(args)) {
+                // one main window holds the editor and the logger
+            } else if (containsLoggerArg(args)) {
                 openLogger(DISPOSE_ON_CLOSE, args);
             } else {
                 openEditor(DISPOSE_ON_CLOSE, args);
@@ -152,6 +156,8 @@ public class ECUExec {
 	    while (true) {
 	    	try {
 	    		ExecutableInstance instance = EditorLoggerCommunication.waitForOtherExec();
+	    		if (instance.execType != Exec_type.UNKNOWN &&
+	    				Shell.handOver(instance.execType == Exec_type.LOGGER, instance.currentArgs)) continue;
 
 	    		if(instance.execType == Exec_type.LOGGER) {
 	    			if(EditorLoggerCommunication.getExecutableType() == Exec_type.LOGGER ||
