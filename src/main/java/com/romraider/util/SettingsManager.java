@@ -53,6 +53,7 @@ public class SettingsManager {
 
     private static Settings settings = null;
     private static boolean testing = false;
+    private static boolean held = false;
 
     public static Settings getSettings() {
         if(null == settings) {
@@ -67,6 +68,11 @@ public class SettingsManager {
 
     public static boolean getTesting() {
     	return testing;
+    }
+
+    /** While held, save() keeps the settings in memory only: a window that closes several parts saves once. */
+    public static void holdSaves(boolean hold) {
+        held = hold;
     }
     
     private static Settings load() {
@@ -115,6 +121,10 @@ public class SettingsManager {
 
     public static void save(Settings newSettings, JProgressPane progress) {
     	if(testing) return;
+        if (held) {
+            settings = newSettings;
+            return;
+        }
 
         final DOMSettingsBuilder builder = new DOMSettingsBuilder();
         try {

@@ -92,6 +92,7 @@ import com.romraider.maps.TableSwitchView;
 import com.romraider.maps.TableView;
 import com.romraider.net.BrowserControl;
 import com.romraider.net.URL;
+import com.romraider.shell.Shell;
 import com.romraider.swing.AbstractFrame;
 import com.romraider.swing.CustomToolbarLayout;
 import com.romraider.swing.DebugPanel;
@@ -177,7 +178,7 @@ public class ECUEditor extends AbstractFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         addWindowListener(this);
         setTitle(titleText);
-        setVisible(true);
+        setVisible(!Shell.isHosting());
         toFront();
     }
 
@@ -300,6 +301,7 @@ public class ECUEditor extends AbstractFrame {
     }
 
     public void handleExit() {
+        if (Shell.takeOverExit()) return;
         settings.setSplitPaneLocation(splitPane.getDividerLocation());
         settings.setWindowMaximized(getExtendedState() == MAXIMIZED_BOTH);
         settings.setWindowSize(getSize());
@@ -676,6 +678,7 @@ public class ECUEditor extends AbstractFrame {
     }
 
     public void launchLogger() {
+        if (Shell.showLogger()) return;
         if(EcuLogger.getEcuLoggerWithoutCreation() != null) {
             ECUExec.showAlreadyRunningMessage();
             return;

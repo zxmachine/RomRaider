@@ -10,7 +10,7 @@ Java 25 and Apache Ant 1.10. Neither needs to be on PATH:
 ```
 set JAVA_HOME=C:\Tools\jdk-25.0.5+8
 C:\Tools\apache-ant-1.10.15\bin\ant build-windows     (build\windows\lib\RomRaider.jar)
-C:\Tools\apache-ant-1.10.15\bin\ant unittest          (9 tests; XDFConversionLayerTest is left out, it opens the editor)
+C:\Tools\apache-ant-1.10.15\bin\ant unittest          (24 tests; XDFConversionLayerTest is left out, it opens the editor)
 ```
 
 To run a build from this folder:
@@ -20,6 +20,9 @@ java --enable-native-access=ALL-UNNAMED --add-exports java.desktop/sun.awt=ALL-U
      --add-exports java.desktop/sun.awt.windows=ALL-UNNAMED -Djava.library.path=lib/windows/64 ^
      -cp "build/windows/lib/RomRaider.jar;lib/common/*" com.romraider.ECUExec [image.bin | -logger]
 ```
+
+The editor and the logger open as two views of one main window (`com.romraider.shell`; Ctrl+1 and Ctrl+2 switch).
+`-separate` gives upstream's two windows; `-logger.fullscreen` and `-logger.touch` also start as upstream does.
 
 ## Rules
 

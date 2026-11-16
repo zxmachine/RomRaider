@@ -190,6 +190,7 @@ import com.romraider.logger.external.core.ExternalDataItem;
 import com.romraider.logger.external.core.ExternalDataSource;
 import com.romraider.logger.external.core.ExternalDataSourceLoader;
 import com.romraider.logger.external.core.ExternalDataSourceLoaderImpl;
+import com.romraider.shell.Shell;
 import com.romraider.swing.AbstractFrame;
 import com.romraider.swing.SetFont;
 import com.romraider.util.FormatFilename;
@@ -1911,6 +1912,7 @@ public final class EcuLogger extends AbstractFrame implements MessageListener {
     }
 
     public void handleExit() {
+        if (Shell.takeOverExit()) return;
         try {
             try {
                 try {
@@ -2162,6 +2164,9 @@ public final class EcuLogger extends AbstractFrame implements MessageListener {
             frame.setUndecorated(true);
             frame.setResizable(false);
             device.setFullScreenWindow(frame);
+        } else if (Shell.isHosting()) {
+            // the main window shows the logger's content and menus
+            Shell.hostLogger(ecuLogger);
         } else {
             // display in window
             ecuLogger.addWindowListener(ecuLogger);
