@@ -145,6 +145,13 @@ public final class DOMSettingsBuilder {
             files.appendChild(ecuDef);
         }
 
+        // table documentation index (com.romraider.docs)
+        IIOMetadataNode tableDocs = new IIOMetadataNode("tabledocs");
+        tableDocs.setAttribute("index", settings.getTableDocsIndex());
+        tableDocs.setAttribute("width", String.valueOf(settings.getTableDocsWidth()));
+        tableDocs.setAttribute("visible", String.valueOf(settings.isTableDocsVisible()));
+        files.appendChild(tableDocs);
+
         return files;
     }
 
