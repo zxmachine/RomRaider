@@ -7,11 +7,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Setup Java 25
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '25'
@@ -20,5 +20,9 @@ jobs:
       - name: Test Compiler
         run: javac -version
 
-      - name: Build and unit tests
-        run: ant rebuild unittest
+      # two Ant runs: build.xml sets the jar's class path property once per run
+      - name: Build
+        run: ant rebuild
+
+      - name: Unit tests
+        run: ant unittest
