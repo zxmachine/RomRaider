@@ -38,10 +38,13 @@ working folder before the user's own: for a test run, start it from a scratch fo
 copy of `i18n/`. Add `-Duser.home=<scratch>` so the log (`user.home\.RomRaider\rr_system.log`, with
 `-Dlog4j.configuration=file:/<fork>/lib/log4j.properties`) and anything else stays there too.
 
-The logger falls back to a serial port after a failed J2534 init and picks the first port present when the saved one
-is missing, then writes SSM bytes to it. On a computer where a serial port drives something else (a relay board),
-set `<serial ... fallback="false"/>` in the logger settings and name the J2534 DLL in
-`<protocol ... library="<path>"/>`: the logger then stays on that DLL and never opens a serial port.
+With its device on "Any" (upstream's behaviour), the logger tries the J2534 adapters found, then falls back to a
+serial port, picking the first one present when the saved one is missing, and writes SSM bytes to it. On a computer
+where a serial port drives something else (a relay board), lock the logger to one device: the Device box on the
+logger's toolbar (`com.romraider.logger.ecu.ui.device`), or `<device type="j2534" name="<DLL path>"/>` (or
+`type="serial" name="COM3"`) in the logger settings. A locked device is the only one opened, also by the logger's
+other tools (`ConnectionManagerFactory`), and it is never swapped for another. `-Duser.home` moves jSerialComm's
+native library too, which then may not load: the box then lists no serial ports.
 
 ## Packaging
 

@@ -156,6 +156,7 @@ import com.romraider.logger.ecu.ui.EcuDataComparator;
 import com.romraider.logger.ecu.ui.MessageListener;
 import com.romraider.logger.ecu.ui.SerialPortComboBox;
 import com.romraider.logger.ecu.ui.StatusIndicator;
+import com.romraider.logger.ecu.ui.device.DeviceChooser;
 import com.romraider.logger.ecu.ui.handler.DataUpdateHandlerManager;
 import com.romraider.logger.ecu.ui.handler.DataUpdateHandlerManagerImpl;
 import com.romraider.logger.ecu.ui.handler.dash.DashboardUpdateHandler;
@@ -1508,6 +1509,17 @@ public final class EcuLogger extends AbstractFrame implements MessageListener {
             }
         });
         JPanel comboBoxPanel = new JPanel(new FlowLayout());
+        // the device the logger is locked to, or any (com.romraider.logger.ecu.ui.device)
+        final DeviceChooser deviceChooser = new DeviceChooser(getSettings(), new Runnable() {
+            @Override
+            public void run() {
+                portsComboBox.setEnabled(!getSettings().isLoggerDeviceLocked());
+                restartLogging();
+            }
+        });
+        portsComboBox.setEnabled(!getSettings().isLoggerDeviceLocked());
+        comboBoxPanel.add(new JLabel(deviceChooser.getLabelText()));
+        comboBoxPanel.add(deviceChooser);
         comboBoxPanel.add(new JLabel(rb.getString("COMPORT")));
         comboBoxPanel.add(portsComboBox);
 

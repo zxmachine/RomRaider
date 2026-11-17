@@ -46,8 +46,22 @@ public final class ConnectionManagerFactory {
         final Settings settings = SettingsManager.getSettings();
         ConnectionManager manager = null;
 
+        // A device the logger is locked to (com.romraider.logger.ecu.ui.device) is the only one opened
+        if (Settings.DEVICE_J2534.equals(settings.getLoggerDeviceType())) {
+            LOGGER.info("Locked J2534 device: " + settings.getLoggerDeviceName());
+            manager = J2534TransportFactory.getManager(
+                    settings.getTransportProtocol().toUpperCase(),
+                    connectionProperties,
+                    settings.getLoggerDeviceName());
+        }
+        else if (Settings.DEVICE_SERIAL.equals(settings.getLoggerDeviceType())) {
+            LOGGER.info("Locked serial port: " + settings.getLoggerDeviceName());
+            manager = settings.getElm327Enabled()
+                    ? new ElmConnectionManager(settings.getLoggerDeviceName(), connectionProperties)
+                    : new SerialConnectionManager(settings.getLoggerDeviceName(), connectionProperties);
+        }
         // Try a serial connection
-        if (isNullOrEmpty(settings.getJ2534Device())) {
+        else if (isNullOrEmpty(settings.getJ2534Device())) {
 
             if(SettingsManager.getSettings().getElm327Enabled()) {
                 LOGGER.info("Trying to connect to ELM327...");

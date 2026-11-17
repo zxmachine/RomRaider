@@ -352,7 +352,6 @@ public final class DOMSettingsBuilder {
         IIOMetadataNode serial = new IIOMetadataNode("serial");
         serial.setAttribute("port", validateAttr(settings.getLoggerPortDefault()));
         serial.setAttribute("refresh", String.valueOf(settings.getRefreshMode()));
-        serial.setAttribute("fallback", String.valueOf(settings.isSerialFallback()));
         loggerSettings.appendChild(serial);
 
         // Protocol connection
@@ -363,6 +362,12 @@ public final class DOMSettingsBuilder {
         protocol.setAttribute("fastpoll", String.valueOf(settings.isFastPoll()));
         protocol.setAttribute("library", validateAttr(settings.getJ2534Device()));
         loggerSettings.appendChild(protocol);
+
+        // the device the logger is locked to (com.romraider.logger.ecu.ui.device)
+        IIOMetadataNode device = new IIOMetadataNode("device");
+        device.setAttribute("type", settings.getLoggerDeviceType());
+        device.setAttribute("name", validateAttr(settings.getLoggerDeviceName()));
+        loggerSettings.appendChild(device);
 
         // window maximized
         IIOMetadataNode maximized = new IIOMetadataNode("maximized");

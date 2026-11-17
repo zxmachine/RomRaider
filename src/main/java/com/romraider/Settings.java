@@ -209,7 +209,14 @@ public class Settings implements Serializable {
 
     private String loggerPort;
     private String loggerPortDefault = "";
-    private boolean serialFallback = true; // false: a failed J2534 init never falls back to a serial port
+    // The device the logger is locked to (com.romraider.logger.ecu.ui.device): DEVICE_AUTO tries the J2534
+    // adapters found and then the serial port, as RomRaider always did; DEVICE_J2534 and DEVICE_SERIAL use
+    // only loggerDeviceName (a J2534 DLL's path, a serial port's name) and never fall back to anything else.
+    public static final String DEVICE_AUTO = "auto";
+    public static final String DEVICE_J2534 = "j2534";
+    public static final String DEVICE_SERIAL = "serial";
+    private String loggerDeviceType = DEVICE_AUTO;
+    private String loggerDeviceName = "";
     private static String loggerProtocol = SSM;
     private static String loggerDefinitionFilePath = "";
     private static String loggerProfileFilePath = "";
@@ -723,12 +730,22 @@ public class Settings implements Serializable {
         return loggerRefreshMode;
     }
 
-    public void setSerialFallback(boolean serialFallback) {
-        this.serialFallback = serialFallback;
+    public void setLoggerDevice(String type, String name) {
+        final boolean known = DEVICE_J2534.equals(type) || DEVICE_SERIAL.equals(type);
+        this.loggerDeviceType = known && name != null && !name.isEmpty() ? type : DEVICE_AUTO;
+        this.loggerDeviceName = DEVICE_AUTO.equals(loggerDeviceType) ? "" : name;
     }
 
-    public boolean isSerialFallback() {
-        return serialFallback;
+    public String getLoggerDeviceType() {
+        return loggerDeviceType;
+    }
+
+    public String getLoggerDeviceName() {
+        return loggerDeviceName;
+    }
+
+    public boolean isLoggerDeviceLocked() {
+        return !DEVICE_AUTO.equals(loggerDeviceType);
     }
 
     public void setTargetModule(String string) {

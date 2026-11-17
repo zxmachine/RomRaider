@@ -274,7 +274,9 @@ public final class DOMSettingsUnmarshaller {
             if (n.getNodeType() == ELEMENT_NODE && n.getNodeName().equalsIgnoreCase("serial")) {
                 settings.setLoggerPortDefault(unmarshallAttribute(n, "port", ""));
                 settings.setRefreshMode(unmarshallAttribute(n, "refresh", false));
-                settings.setSerialFallback(unmarshallAttribute(n, "fallback", true));
+            } else if (n.getNodeType() == ELEMENT_NODE && n.getNodeName().equalsIgnoreCase("device")) {
+                settings.setLoggerDevice(unmarshallAttribute(n, "type", Settings.DEVICE_AUTO),
+                        unmarshallAttribute(n, "name", ""));
             } else if (n.getNodeType() == ELEMENT_NODE && n.getNodeName().equalsIgnoreCase("autoConnectOnStartup")) {
                 settings.setAutoConnectOnStartup(unmarshallAttribute(n, "value", true));
             } else if (n.getNodeType() == ELEMENT_NODE && n.getNodeName().equalsIgnoreCase("protocol")) {

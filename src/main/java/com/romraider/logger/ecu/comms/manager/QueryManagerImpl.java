@@ -199,6 +199,15 @@ public final class QueryManagerImpl implements QueryManager {
 
     private boolean doEcuInit(Module module) {
 
+        if (settings.isLoggerDeviceLocked()) {
+            // Locked to one device: only that one is tried, nothing else, and
+            // it is kept for the next try (ConnectionManagerFactory opens it)
+            LOGGER.info(String.format("Trying the locked %s device: %s",
+                    settings.getLoggerDeviceType(),
+                    settings.getLoggerDeviceName()));
+            return initConnection(module, settings.getLoggerDeviceName());
+        }
+
         final Set<J2534Library> libraries = J2534LibraryLocator.getLibraries(
                 settings.getTransportProtocol().toUpperCase());
 
@@ -224,11 +233,6 @@ public final class QueryManagerImpl implements QueryManager {
             if (initConnection(module, settings.getJ2534Device())) {
                 return true;
             }
-        }
-        if (!settings.isSerialFallback()) {
-            // J2534 only: keep the library for the next try, and never write
-            // to whatever device sits on a serial port
-            return false;
         }
         settings.setJ2534Device("");
         // Finally try Serial
