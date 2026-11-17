@@ -97,7 +97,46 @@ public final class J2534ConnectionISO9141 implements ConnectionManager {
     public byte[] send(byte[] request) {
         checkNotNull(request, "request");
         api.writeMsg(channelId, request, timeout, TxFlags.NO_FLAGS);
-        return api.readMsg(channelId, 1, timeout);
+        return completeFrame(request, api.readMsg(channelId, 1, timeout));
+    }
+
+    // Some ECUs (the 16-bit Denso ones) send a reply in bursts, which the
+    // adapter hands over as several messages, so the first message can hold
+    // only part of the SSM frame (80 F0 10 LL ... checksum). Read on until the
+    // frame's length is reached; anything else is returned as it is.
+    private byte[] completeFrame(byte[] request, byte[] response) {
+        final int start = startsWith(response, request) ? request.length : 0;
+        if (response.length <= start || response[start] != (byte) 0x80) {
+            return response;
+        }
+        byte[] frame = response;
+        if (frame.length < start + 4) {
+            frame = readMore(frame, start + 4);
+        }
+        final int length = start + (frame[start + 3] & 0xFF) + 5;
+        if (frame.length < length) {
+            frame = readMore(frame, length);
+        }
+        return frame;
+    }
+
+    private byte[] readMore(byte[] head, int length) {
+        final byte[] rest = new byte[length - head.length];
+        api.readMsg(channelId, rest, timeout);
+        final byte[] whole = new byte[length];
+        arraycopy(head, 0, whole, 0, head.length);
+        arraycopy(rest, 0, whole, head.length, rest.length);
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("J2534/ISO9141 response completed from " + head.length + " to " + length + " bytes");
+        return whole;
+    }
+
+    private static boolean startsWith(byte[] data, byte[] prefix) {
+        if (data.length < prefix.length) return false;
+        for (int i = 0; i < prefix.length; i++) {
+            if (data[i] != prefix[i]) return false;
+        }
+        return true;
     }
 
     @Override
