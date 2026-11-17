@@ -38,6 +38,8 @@ public class Table2DView extends TableView {
         super(table);
         axis = new Table1DView(table.getAxis(), Table1DType.X_AXIS);
         axis.setAxisParent(this);
+        // the logger's live values reach the axis through its table's view (TableUpdateHandler)
+        table.getAxis().setTableView(axis);
         verticalOverhead += 18;
     }
 
