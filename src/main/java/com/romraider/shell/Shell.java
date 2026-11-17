@@ -67,6 +67,7 @@ public final class Shell {
                     ViewRegistry registry = new ViewRegistry();
                     registry.add(new EditorView());     // the base view, closed last
                     registry.add(new LoggerView());
+                    registry.add(new com.romraider.flash.ui.FlashView());
                     // further views are added here
                     MainWindow created = new MainWindow(registry, args);
                     window = created;
@@ -152,6 +153,12 @@ public final class Shell {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+                String busy = current.getRegistry().busyReason();
+                if (busy != null) {     // a write to an ECU runs: leave its view as it is
+                    current.bringToFront();
+                    javax.swing.JOptionPane.showMessageDialog(current, busy);
+                    return;
+                }
                 String id = logger ? ShellView.LOGGER : ShellView.EDITOR;
                 current.showView(id);
                 current.getRegistry().get(id).handOver(args);

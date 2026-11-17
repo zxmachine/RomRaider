@@ -190,6 +190,12 @@ public final class MainWindow extends JFrame {
      */
     public void close() {
         if (closing) return;
+        String busy = registry.busyReason();
+        if (busy != null) {
+            javax.swing.JOptionPane.showMessageDialog(this, busy, PRODUCT_NAME,
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         closing = true;
         ShellView base = registry.getBase();
         List<ShellView> order = registry.closeOrder();

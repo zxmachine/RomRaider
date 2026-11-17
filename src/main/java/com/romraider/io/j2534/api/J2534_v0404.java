@@ -90,6 +90,7 @@ public class J2534_v0404 implements Library {
             NativeLong msgID
             );
     public native NativeLong PassThruSetProgrammingVoltage(
+            NativeLong DeviceID,
             NativeLong pinNumber,
             NativeLong voltage
             );

@@ -120,6 +120,13 @@ public final class DOMSettingsUnmarshaller {
                 settings.setTableDocsIndex(unmarshallAttribute(n, "index", ""));
                 settings.setTableDocsWidth(unmarshallAttribute(n, "width", 460));
                 settings.setTableDocsVisible(unmarshallAttribute(n, "visible", true));
+
+            } else if (n.getNodeType() == ELEMENT_NODE && n.getNodeName().equalsIgnoreCase("flash")) {
+                settings.setFlashKernel(unmarshallAttribute(n, "kernel", ""));
+                settings.setFlashKernelProfile(unmarshallAttribute(n, "profile", "reply80"));
+                settings.setFlashFolder(unmarshallAttribute(n, "folder", ""));
+                settings.setFlashMinBattery(unmarshallAttribute(n, "minbattery", 12.0));
+                settings.setFlashAdapter(unmarshallAttribute(n, "adapter", ""));
             }
         }
         return settings;

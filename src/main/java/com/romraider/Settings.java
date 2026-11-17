@@ -1011,4 +1011,23 @@ public class Settings implements Serializable {
     public void setTableDocsWidth(int width) { this.tableDocsWidth = width; }
     public boolean isTableDocsVisible() { return tableDocsVisible; }
     public void setTableDocsVisible(boolean visible) { this.tableDocsVisible = visible; }
+
+    // flashing (com.romraider.flash): kernel file and profile, the folder for reads and logs,
+    // the battery minimum and the adapter library (the writing switch is never kept: off at each start)
+    private String flashKernel = "";
+    private String flashKernelProfile = "reply80";
+    private String flashFolder = "";
+    private double flashMinBattery = 12.0;
+    private String flashAdapter = "";
+
+    public String getFlashKernel() { return flashKernel; }
+    public void setFlashKernel(String path) { this.flashKernel = path == null ? "" : path; }
+    public String getFlashKernelProfile() { return flashKernelProfile; }
+    public void setFlashKernelProfile(String id) { this.flashKernelProfile = id == null ? "" : id; }
+    public String getFlashFolder() { return flashFolder; }
+    public void setFlashFolder(String path) { this.flashFolder = path == null ? "" : path; }
+    public double getFlashMinBattery() { return flashMinBattery; }
+    public void setFlashMinBattery(double volts) { this.flashMinBattery = volts; }
+    public String getFlashAdapter() { return flashAdapter; }
+    public void setFlashAdapter(String library) { this.flashAdapter = library == null ? "" : library; }
 }

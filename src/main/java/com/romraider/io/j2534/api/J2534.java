@@ -66,4 +66,23 @@ public interface J2534 {
     void disconnect(int channelId);
 
     void close(int deviceId);
+
+    /** Pin value for {@link #setProgrammingVoltage}: the pin is switched off. */
+    int VOLTAGE_OFF = 0xFFFFFFFF;
+
+    /** Pin value for {@link #setProgrammingVoltage}: the pin is shorted to ground. */
+    int SHORT_TO_GROUND = 0xFFFFFFFE;
+
+    /**
+     * Drives a pin of the vehicle connector: a voltage in millivolts,
+     * {@link #VOLTAGE_OFF} or {@link #SHORT_TO_GROUND}.
+     */
+    void setProgrammingVoltage(int deviceId, int pin, int voltage);
+
+    /**
+     * Whatever bytes arrive within the timeout, in arrival order; empty when
+     * none did. Returns as soon as some data is there, and never throws on a
+     * timeout.
+     */
+    byte[] readAvailable(int channelId, long timeout);
 }

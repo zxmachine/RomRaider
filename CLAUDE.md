@@ -10,7 +10,7 @@ Java 25 and Apache Ant 1.10. Neither needs to be on PATH:
 ```
 set JAVA_HOME=C:\Tools\jdk-25.0.5+8
 C:\Tools\apache-ant-1.10.15\bin\ant build-windows     (build\windows\lib\RomRaider.jar)
-C:\Tools\apache-ant-1.10.15\bin\ant unittest          (38 tests; XDFConversionLayerTest is left out, it opens the editor)
+C:\Tools\apache-ant-1.10.15\bin\ant unittest          (93 tests; XDFConversionLayerTest is left out, it opens the editor)
 ```
 
 JavaFX is optional: it draws the diagrams in the table documentation panel ([docs/table_docs.md](docs/table_docs.md)).
@@ -28,6 +28,9 @@ java --enable-native-access=ALL-UNNAMED --add-exports java.desktop/sun.awt=ALL-U
 
 The editor and the logger open as two views of one main window (`com.romraider.shell`; Ctrl+1 and Ctrl+2 switch).
 `-separate` gives upstream's two windows; `-logger.fullscreen` and `-logger.touch` also start as upstream does.
+The third view, Flash (Ctrl+3, `com.romraider.flash`), reads and writes an ECU ([docs/flashing.md](docs/flashing.md)).
+It is tested only against the simulated ECU in `src/test/java/com/romraider/flash/sim`; never run a write against a
+real ECU from an agent session, and never commit a kernel or an ECU image.
 
 With JavaFX, add `--module-path C:\Tools\javafx-sdk-25.0.5\lib --add-modules javafx.swing,javafx.web` and
 `--enable-native-access=javafx.graphics,javafx.web,javafx.media,ALL-UNNAMED`. RomRaider reads a `settings.xml` in the

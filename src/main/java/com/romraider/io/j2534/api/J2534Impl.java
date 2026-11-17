@@ -1086,6 +1086,60 @@ public final class J2534Impl implements J2534 {
                 "PassThruClose", ret.intValue());
         }
 
+    /**
+     * Drive a pin of the vehicle connector.
+     * @param deviceId - handle to the PassThru device
+     * @param pin      - connector pin number
+     * @param voltage  - millivolts, VOLTAGE_OFF or SHORT_TO_GROUND
+     */
+    @Override
+    public void setProgrammingVoltage(int deviceId, int pin, int voltage) {
+        NativeLong ret = lib.PassThruSetProgrammingVoltage(
+                new NativeLong(deviceId),
+                new NativeLong(pin),
+                new NativeLong(voltage & 0xFFFFFFFFL)
+            );
+        if (ret.intValue() != Status.NOERROR.getValue()) handleError(
+                "PassThruSetProgrammingVoltage", ret.intValue());
+    }
+
+    /**
+     * Read whatever arrives within the timeout, without waiting for more.
+     * @param  channelId - handle to the open communications channel
+     * @param  timeout   - maximum time (in milliseconds) to wait for data
+     * @return the received bytes, empty when none arrived
+     */
+    @Override
+    public byte[] readAvailable(int channelId, long timeout) {
+        final int max = 8;
+        PASSTHRU_MSG[] msgs =
+            (PASSTHRU_MSG[]) new PASSTHRU_MSG.ByReference().toArray(max);
+        NativeLongByReference pNumMsgs = new NativeLongByReference();
+        pNumMsgs.setValue(new NativeLong(max));
+        NativeLong status = lib.PassThruReadMsgs(
+                new NativeLong(channelId),
+                msgs[0].getPointer(),
+                pNumMsgs,
+                new NativeLong(timeout)
+            );
+        if (status.intValue() != Status.NOERROR.getValue() &&
+            status.intValue() != Status.ERR_TIMEOUT.getValue() &&
+            status.intValue() != Status.ERR_BUFFER_EMPTY.getValue())
+                handleError("PassThruReadMsgs", status.intValue());
+        int cnt = Math.min(pNumMsgs.getValue().intValue(), max);
+        List<byte[]> responses = new ArrayList<byte[]>();
+        for (int i = 0; i < cnt; i++) {
+            msgs[i].read();
+            if (LOGGER.isTraceEnabled())
+                LOGGER.trace("Read A Msg: " + toString(msgs[i]));
+            // skip the echoes of our own messages (only there with loopback on)
+            if ((msgs[i].rxStatus.intValue() & RxStatus.TX_LOOPBACK.getValue()) != 0 && !loopback)
+                continue;
+            responses.add(data(msgs[i]));
+        }
+        return concat(responses);
+    }
+
     private byte[] concat(List<byte[]> responses) {
         int length = 0;
         for (byte[] response : responses) length += response.length;

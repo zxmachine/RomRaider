@@ -106,6 +106,16 @@ public final class ViewRegistry {
         return order;
     }
 
+    /** The first started view's reason not to close now, or null when all may close. */
+    public String busyReason() {
+        for (ShellView view : views) {
+            if (!started.contains(view)) continue;
+            String reason = view.busyReason();
+            if (reason != null) return reason;
+        }
+        return null;
+    }
+
     /** The shortcut to switch to the view at this index: Ctrl+1 to Ctrl+9, or null. */
     public static KeyStroke shortcut(int index) {
         if (index < 0 || index > 8) return null;

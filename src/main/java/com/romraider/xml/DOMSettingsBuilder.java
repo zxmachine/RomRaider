@@ -152,6 +152,15 @@ public final class DOMSettingsBuilder {
         tableDocs.setAttribute("visible", String.valueOf(settings.isTableDocsVisible()));
         files.appendChild(tableDocs);
 
+        // flashing (com.romraider.flash)
+        IIOMetadataNode flash = new IIOMetadataNode("flash");
+        flash.setAttribute("kernel", settings.getFlashKernel());
+        flash.setAttribute("profile", settings.getFlashKernelProfile());
+        flash.setAttribute("folder", settings.getFlashFolder());
+        flash.setAttribute("minbattery", String.valueOf(settings.getFlashMinBattery()));
+        flash.setAttribute("adapter", settings.getFlashAdapter());
+        files.appendChild(flash);
+
         return files;
     }
 

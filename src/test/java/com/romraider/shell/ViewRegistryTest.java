@@ -123,4 +123,30 @@ public class ViewRegistryTest {
         assertNull(ViewRegistry.shortcut(9));
         assertNull(ViewRegistry.shortcut(-1));
     }
+
+    @Test
+    public void aStartedBusyViewKeepsTheWindowOpen() {
+        final String[] reason = {null};
+        ShellView busy = new ShellView() {
+            @Override public String getId() { return "flash"; }
+            @Override public String getName() { return "flash"; }
+            @Override public void start(MainWindow window, String[] args) { }
+            @Override public Container getContent() { return null; }
+            @Override public List<JMenu> getMenus() { return Collections.emptyList(); }
+            @Override public String getTitle() { return "flash"; }
+            @Override public void activated() { }
+            @Override public void handOver(String[] args) { }
+            @Override public void stop(MainWindow window) { }
+            @Override public String busyReason() { return reason[0]; }
+        };
+        ViewRegistry registry = new ViewRegistry();
+        registry.add(new NamedView(ShellView.EDITOR));
+        registry.add(busy);
+        reason[0] = "writing";
+        assertNull("a view that is not started is not asked", registry.busyReason());
+        registry.markStarted(busy);
+        assertEquals("writing", registry.busyReason());
+        reason[0] = null;
+        assertNull(registry.busyReason());
+    }
 }

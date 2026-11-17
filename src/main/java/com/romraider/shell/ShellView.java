@@ -74,4 +74,12 @@ public interface ShellView {
      * may end the program.
      */
     void stop(MainWindow window);
+
+    /**
+     * Why the main window must not close or switch views now (a write to an
+     * ECU is running), or null when it may.
+     */
+    default String busyReason() {
+        return null;
+    }
 }
