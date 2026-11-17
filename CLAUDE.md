@@ -34,6 +34,15 @@ With JavaFX, add `--module-path C:\Tools\javafx-sdk-25.0.5\lib --add-modules jav
 working folder before the user's own: for a test run, start it from a scratch folder holding a `settings.xml` and a
 copy of `i18n/`.
 
+## Packaging
+
+`ant -f package.xml` makes `build\package\image\RomRaider` (`RomRaider.exe` with its own Java runtime, so users need
+no Java) and a ZIP of it in `build\dist`. It uses jlink and jpackage of the JDK; nothing else is needed. With
+`-Djavafx.sdk=C:\Tools\javafx-sdk-25.0.5 -Djavafx.jmods=C:\Tools\javafx-jmods-25.0.5` (or `JAVAFX_SDK` and
+`JAVAFX_JMODS`) JavaFX is built in. The packaged program starts through `com.romraider.shell.PackagedStart`, which
+starts it in its own folder. CI builds the package with JavaFX on every push and keeps it as the artifact
+`RomRaider-windows-x64`. Upstream's launch4j and IzPack targets in `build.xml` are left as they are and not used.
+
 ## Rules
 
 * Stay mergeable with upstream: new code goes into new packages and new files; edits to existing files are small;

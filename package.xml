@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Packages RomRaider for Windows as a folder that needs no installed Java, and as a ZIP of that folder:
+
+        ant -f package.xml                (build\package\image\RomRaider\RomRaider.exe, build\dist\*.zip)
+
+    It uses only tools of the JDK that runs Ant: jlink makes a Java runtime with the modules RomRaider
+    needs, and jpackage puts the launcher, the jar, the libraries and that runtime together.
+    Run it on Windows; a package for another system has to be made on that system.
+
+    JavaFX (for the diagrams of the table documentation panel) is optional. To build it in, name both
+    of its downloads:
+        -Djavafx.sdk=<JavaFX SDK folder>      or the environment variable JAVAFX_SDK    (to compile)
+        -Djavafx.jmods=<JavaFX jmods folder>  or the environment variable JAVAFX_JMODS  (for the runtime)
+
+    build.xml and its launch4j and IzPack templates are left as upstream has them.
+-->
+<project name="romraider-package" default="package-windows" basedir=".">
+
+    <property environment="env" />
+    <property file="version.properties" />
+
+    <property name="build.dir" location="${basedir}/build" />
+    <property name="package.dir" location="${build.dir}/package" />
+    <property name="dist.dir" location="${build.dir}/dist" />
+    <property name="package.version" value="${version.major}.${version.minor}.${version.patch}" />
+
+    <condition property="javafx.sdk" value="${env.JAVAFX_SDK}">
+        <isset property="env.JAVAFX_SDK" />
+    </condition>
+    <condition property="javafx.jmods" value="${env.JAVAFX_JMODS}">
+        <isset property="env.JAVAFX_JMODS" />
+    </condition>
+    <property name="javafx.jmods" location="${basedir}/no-javafx-jmods" />
+    <condition property="have.javafx.jmods">
+        <available file="${javafx.jmods}/javafx.web.jmod" />
+    </condition>
+
+    <!-- the modules RomRaider and its libraries use (jdeps), and jdk.unsupported for the native-access libraries -->
+    <property name="modules.base" value="java.base,java.desktop,java.management,java.naming,java.sql,jdk.unsupported" />
+    <condition property="modules" value="${modules.base},javafx.swing,javafx.web" else="${modules.base}">
+        <isset property="have.javafx.jmods" />
+    </condition>
+    <condition property="native.access" value="ALL-UNNAMED,javafx.graphics,javafx.web,javafx.media" else="ALL-UNNAMED">
+        <isset property="have.javafx.jmods" />
+    </condition>
+    <condition property="package.flavour" value="with JavaFX" else="without JavaFX">
+        <isset property="have.javafx.jmods" />
+    </condition>
+
+    <target name="package-windows" description="A Windows folder and ZIP with RomRaider.exe and its own Java runtime">
+        <fail message="Run this on Windows: jpackage makes a launcher for the system it runs on.">
+            <condition>
+                <not><os family="windows" /></not>
+            </condition>
+        </fail>
+        <echo message="Packaging ${name.package} ${package.version} ${package.flavour}" />
+
+        <!-- the jar, by upstream's build -->
+        <ant antfile="build.xml" target="build-windows" inheritAll="false">
+            <propertyset>
+                <propertyref name="javafx.sdk" />
+            </propertyset>
+        </ant>
+
+        <!-- jpackage marks the launcher read-only, which stops a plain delete of an earlier package -->
+        <mkdir dir="${package.dir}" />
+        <attrib readonly="false">
+            <fileset dir="${package.dir}" />
+        </attrib>
+        <delete dir="${package.dir}" />
+        <mkdir dir="${package.dir}/stage/lib/common" />
+        <mkdir dir="${package.dir}/content/lib/windows/64" />
+        <mkdir dir="${dist.dir}" />
+
+        <!-- what goes beside the launcher's jar: the jar and the libraries its manifest names -->
+        <copy todir="${package.dir}/stage" file="${build.dir}/windows/lib/${name.package}.jar" />
+        <copy todir="${package.dir}/stage/lib/common">
+            <fileset dir="lib/common" includes="*.jar" />
+        </copy>
+
+        <!-- what RomRaider reads from its own folder -->
+        <copy todir="${package.dir}/content/lib/windows/64">
+            <fileset dir="lib/windows/64" />
+        </copy>
+        <copy todir="${package.dir}/content/lib" file="lib/log4j.properties" />
+
+        <!-- the runtime -->
+        <condition property="jlink.modulepath.option" value="--module-path" else="--verbose">
+            <isset property="have.javafx.jmods" />
+        </condition>
+        <condition property="jlink.modulepath.value" value="${javafx.jmods}" else="--verbose">
+            <isset property="have.javafx.jmods" />
+        </condition>
+        <exec executable="${java.home}/bin/jlink" failonerror="true">
+            <arg value="${jlink.modulepath.option}" />
+            <arg value="${jlink.modulepath.value}" />
+            <arg value="--add-modules" />
+            <arg value="${modules}" />
+            <arg value="--strip-debug" />
+            <arg value="--no-header-files" />
+            <arg value="--no-man-pages" />
+            <arg value="--output" />
+            <arg file="${package.dir}/runtime" />
+        </exec>
+
+        <!-- the folder with the launcher. $ROOTDIR is the folder of RomRaider.exe. The start class is
+             PackagedStart, which starts the program in that folder whatever the working folder was:
+             RomRaider finds i18n, plugins, customize and lib relative to the working folder -->
+        <exec executable="${java.home}/bin/jpackage" failonerror="true">
+            <arg value="--type" />
+            <arg value="app-image" />
+            <arg value="--name" />
+            <arg value="${name.package}" />
+            <arg value="--app-version" />
+            <arg value="${package.version}" />
+            <arg value="--description" />
+            <arg value="${description.package}" />
+            <arg value="--dest" />
+            <arg file="${package.dir}/image" />
+            <arg value="--input" />
+            <arg file="${package.dir}/stage" />
+            <arg value="--main-jar" />
+            <arg value="${name.package}.jar" />
+            <arg value="--main-class" />
+            <arg value="com.romraider.shell.PackagedStart" />
+            <arg value="--runtime-image" />
+            <arg file="${package.dir}/runtime" />
+            <arg value="--icon" />
+            <arg file="src/main/resources/graphics/romraider-ico.ico" />
+            <arg value="--java-options" />
+            <arg value="--enable-native-access=${native.access}" />
+            <arg value="--java-options" />
+            <arg value="--add-exports=java.desktop/sun.awt=ALL-UNNAMED" />
+            <arg value="--java-options" />
+            <arg value="--add-exports=java.desktop/sun.awt.windows=ALL-UNNAMED" />
+            <arg value="--java-options" />
+            <arg value="-Djava.library.path=$$ROOTDIR/lib/windows/64" />
+            <arg value="--java-options" />
+            <arg value="-Dawt.useSystemAAFontSettings=lcd" />
+            <arg value="--java-options" />
+            <arg value="-Dswing.aatext=true" />
+            <arg value="--java-options" />
+            <arg value="-Dsun.java2d.d3d=true" />
+            <arg value="--java-options" />
+            <arg value="-Xms64M" />
+            <arg value="--java-options" />
+            <arg value="-Xmx512M" />
+            <arg value="--app-content" />
+            <arg file="i18n" />
+            <arg value="--app-content" />
+            <arg file="plugins" />
+            <arg value="--app-content" />
+            <arg file="customize" />
+            <arg value="--app-content" />
+            <arg file="definitions" />
+            <arg value="--app-content" />
+            <arg file="${package.dir}/content/lib" />
+            <arg value="--app-content" />
+            <arg file="license.txt" />
+            <arg value="--app-content" />
+            <arg file="release_notes.txt" />
+        </exec>
+
+        <zip destfile="${dist.dir}/${name.package}-${package.version}-windows-x64.zip"
+             basedir="${package.dir}/image" />
+        <echo message="Made ${package.dir}/image/${name.package} and ${dist.dir}/${name.package}-${package.version}-windows-x64.zip" />
+    </target>
+</project>
