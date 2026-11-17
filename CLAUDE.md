@@ -29,8 +29,12 @@ java --enable-native-access=ALL-UNNAMED --add-exports java.desktop/sun.awt=ALL-U
 The editor and the logger open as two views of one main window (`com.romraider.shell`; Ctrl+1 and Ctrl+2 switch).
 `-separate` gives upstream's two windows; `-logger.fullscreen` and `-logger.touch` also start as upstream does.
 The third view, Flash (Ctrl+3, `com.romraider.flash`), reads and writes an ECU ([docs/flashing.md](docs/flashing.md)).
-It is tested only against the simulated ECU in `src/test/java/com/romraider/flash/sim`; never run a write against a
-real ECU from an agent session, and never commit a kernel or an ECU image.
+Its unit tests run against the simulated ECU in `src/test/java/com/romraider/flash/sim`; it has also been tried on
+one bench ECU (the list at the top of `docs/flashing.md`). Write a real ECU from an agent session only when the user
+has allowed it, never a car without the user's OK for that write, and never commit a kernel or an ECU image. A
+session uploads only the kernels in `KnownKernel`: add one only after reading its code shows it erases and programs
+the application flash alone, never the boot loader's block, and give it the CRC-32 of its code as the ECU's RAM holds
+it.
 
 With JavaFX, add `--module-path C:\Tools\javafx-sdk-25.0.5\lib --add-modules javafx.swing,javafx.web` and
 `--enable-native-access=javafx.graphics,javafx.web,javafx.media,ALL-UNNAMED`. RomRaider reads a `settings.xml` in the

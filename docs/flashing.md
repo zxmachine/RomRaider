@@ -156,6 +156,9 @@ tests (`ant unittest`), then start RomRaider with `build/test` on the class path
 -Dromraider.flash.sim.profile=reply80
 ```
 
+Name the same kernel file in the view. A kernel file that is not one of the known kernels needs "Allow an unknown
+kernel" ticked, as with a real ECU, and its code in RAM is then not checked.
+
 ## Not tried yet
 
 * Any car. Not settled on the bench (above): pin 11 between a killed program and the next open, and with USB pulled

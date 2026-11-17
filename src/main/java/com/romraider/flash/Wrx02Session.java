@@ -40,8 +40,11 @@ import com.romraider.io.j2534.api.J2534RawKLine;
  * <li>Entry: the reflash pin (OBD pin 9) is grounded and the user cycles the
  * ignition. Until the boot loader answers, the pin is released for 200 ms and
  * grounded again, then the handshake 'M' frame is sent at 9600 baud.</li>
- * <li>Upload: the kernel goes in one scrambled 'S' frame; then the channel
- * reopens at the kernel's baud rate.</li>
+ * <li>Upload: only a known kernel (or one the user allowed) is sent, in one
+ * scrambled 'S' frame; then the channel reopens at the kernel's baud rate.
+ * Before the kernel is used, it gives the CRC-32 of its own code in RAM, which
+ * must be the known kernel's; a kernel left running from an earlier session is
+ * used again only if it passes that check.</li>
  * <li>Read: 0x200 bytes at a time, each checked against the kernel's CRC-32 of
  * the same memory, three tries each.</li>
  * <li>Compare: the CRC-32 of each 16 KB block against the image.</li>

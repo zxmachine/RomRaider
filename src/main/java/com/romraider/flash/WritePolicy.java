@@ -24,10 +24,10 @@ import java.util.List;
 
 /**
  * The rules a write must pass, each one a method of its own so that it can
- * be tested alone. A session calls them in this order: the image and the
- * settings before anything is sent; the battery; the ECU's ROM ID once the
- * kernel answers; the typed confirmation once the blocks are known; and the
- * address of every erase and program command.
+ * be tested alone. A session calls them in this order: the kernel file, the
+ * image and the settings before anything is sent; the battery; the ECU's ROM
+ * ID once the kernel answers; the typed confirmation once the blocks are
+ * known; and the address of every erase and program command.
  */
 public final class WritePolicy {
     /** How to switch writing on, for messages and the user interface. */
