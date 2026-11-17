@@ -116,6 +116,10 @@ public final class DOMSettingsUnmarshaller {
             } else if (n.getNodeType() == ELEMENT_NODE && n.getNodeName().equalsIgnoreCase(Settings.REPOSITORY_ELEMENT_NAME)) {
                 settings.setLastRepositoryDir(new File(unmarshallAttribute(n, Settings.REPOSITORY_ATTRIBUTE_NAME, "repositories")));
 
+            } else if (n.getNodeType() == ELEMENT_NODE && n.getNodeName().equalsIgnoreCase("tabledocs")) {
+                settings.setTableDocsIndex(unmarshallAttribute(n, "index", ""));
+                settings.setTableDocsWidth(unmarshallAttribute(n, "width", 460));
+                settings.setTableDocsVisible(unmarshallAttribute(n, "visible", true));
             }
         }
         return settings;

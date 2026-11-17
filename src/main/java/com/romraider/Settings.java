@@ -999,4 +999,16 @@ public class Settings implements Serializable {
     public boolean isTableTreeSorted() {
         return this.sortTableTree;
     }
+
+    // table documentation panel (com.romraider.docs): index file, panel width and visibility
+    private String tableDocsIndex = "";
+    private int tableDocsWidth = 460;
+    private boolean tableDocsVisible = true;
+
+    public String getTableDocsIndex() { return tableDocsIndex; }
+    public void setTableDocsIndex(String path) { this.tableDocsIndex = path == null ? "" : path; }
+    public int getTableDocsWidth() { return tableDocsWidth; }
+    public void setTableDocsWidth(int width) { this.tableDocsWidth = width; }
+    public boolean isTableDocsVisible() { return tableDocsVisible; }
+    public void setTableDocsVisible(boolean visible) { this.tableDocsVisible = visible; }
 }

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Example table documentation index (docs/table_docs.md). The tables and pages are made up. -->
+<tabledocs base="pages" home="README.md">
+  <page file="idle.md" title="Idle speed control"/>
+  <page file="fuel.md" title="Fuel"/>
+
+  <table name="Idle Speed Target">
+    <doc page="idle.md" anchor="target-speed"/>
+  </table>
+  <table name="Idle Valve Base">
+    <doc page="idle.md" anchor="control-loop"/>
+  </table>
+  <table name="Idle Gain" page="idle.md" anchor="control-loop"/>
+  <table name="Idle After Start Increase" page="idle.md" anchor="states"/>
+  <table name="Base Fuel">
+    <doc page="fuel.md" anchor="base-fuel"/>
+    <doc page="idle.md" anchor="control-loop"/>
+  </table>
+  <table name="Fuel Pump Duty" page="fuel.md" anchor="fuel-pump"/>
+
+  <category name="Idle" page="idle.md"/>
+  <category name="Fuel" page="fuel.md"/>
+
+  <alias source="tbl_Idle_Target" table="Idle Speed Target"/>
+  <alias source="tbl_Idle_Valve_Base" table="Idle Valve Base"/>
+  <alias source="tbl_Idle_Gain" table="Idle Gain"/>
+  <alias source="tbl_Idle_After_Start_Increase" table="Idle After Start Increase"/>
+  <alias source="tbl_Base_Fuel" table="Base Fuel"/>
+  <alias source="tbl_Fuel_Pump_Duty" table="Fuel Pump Duty"/>
+</tabledocs>

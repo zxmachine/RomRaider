@@ -10,8 +10,13 @@ Java 25 and Apache Ant 1.10. Neither needs to be on PATH:
 ```
 set JAVA_HOME=C:\Tools\jdk-25.0.5+8
 C:\Tools\apache-ant-1.10.15\bin\ant build-windows     (build\windows\lib\RomRaider.jar)
-C:\Tools\apache-ant-1.10.15\bin\ant unittest          (24 tests; XDFConversionLayerTest is left out, it opens the editor)
+C:\Tools\apache-ant-1.10.15\bin\ant unittest          (38 tests; XDFConversionLayerTest is left out, it opens the editor)
 ```
+
+JavaFX is optional: it draws the diagrams in the table documentation panel ([docs/table_docs.md](docs/table_docs.md)).
+To build that view in, add `-Djavafx.sdk=C:\Tools\javafx-sdk-25.0.5` to ant (or set `JAVAFX_SDK`); without it the
+build leaves `com.romraider.docs.fx` out. Both builds and the tests must pass with and without it. JavaFX itself is
+never committed.
 
 To run a build from this folder:
 
@@ -24,6 +29,11 @@ java --enable-native-access=ALL-UNNAMED --add-exports java.desktop/sun.awt=ALL-U
 The editor and the logger open as two views of one main window (`com.romraider.shell`; Ctrl+1 and Ctrl+2 switch).
 `-separate` gives upstream's two windows; `-logger.fullscreen` and `-logger.touch` also start as upstream does.
 
+With JavaFX, add `--module-path C:\Tools\javafx-sdk-25.0.5\lib --add-modules javafx.swing,javafx.web` and
+`--enable-native-access=javafx.graphics,javafx.web,javafx.media,ALL-UNNAMED`. RomRaider reads a `settings.xml` in the
+working folder before the user's own: for a test run, start it from a scratch folder holding a `settings.xml` and a
+copy of `i18n/`.
+
 ## Rules
 
 * Stay mergeable with upstream: new code goes into new packages and new files; edits to existing files are small;
@@ -32,4 +42,5 @@ The editor and the logger open as two views of one main window (`com.romraider.s
 * Libraries are jars under `lib/`; there is no Maven or Gradle.
 * The repository is public. Nothing that is not ours to publish goes in: no ECU images, no vendor code or
   firmware, no service-manual text.
-* Don't push without the owner's word.
+* Before a push, search the branch (files and commit messages) for anything of a private project: names, IDs,
+  local paths. Tests use only what the fork has or small made-up fixtures.

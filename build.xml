@@ -136,6 +136,22 @@
         <taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" onerror="report"
                  classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar" />
 
+        <!-- optional JavaFX SDK (-Djavafx.sdk=... or the environment variable JAVAFX_SDK): with it the
+             documentation panel's WebView renderer (com.romraider.docs.fx) is compiled; without it, left out -->
+        <condition property="javafx.sdk" value="${env.JAVAFX_SDK}">
+            <isset property="env.JAVAFX_SDK" />
+        </condition>
+        <property name="javafx.sdk" location="${basedir}/no-javafx-sdk" />
+        <condition property="have.javafx">
+            <available file="${javafx.sdk}/lib/javafx.web.jar" />
+        </condition>
+        <condition property="javafx.excludes" value="**/no-excludes/**" else="**/com/romraider/docs/fx/**">
+            <isset property="have.javafx" />
+        </condition>
+        <path id="javafx.classpath">
+            <fileset dir="${javafx.sdk}/lib" includes="*.jar" erroronmissingdir="false" />
+        </path>
+
         <path id="windows.classpath">
             <fileset dir="lib/common" includes="*.jar" />
             <fileset dir="lib/windows" includes="*.jar" />
@@ -408,6 +424,8 @@
                 <compilerarg value="-Xlint" />
                 -->
                 <classpath refid="@{classpathref}" />
+                <classpath refid="javafx.classpath" />
+                <exclude name="${javafx.excludes}" />
             </javac>
         </sequential>
     </macrodef>
