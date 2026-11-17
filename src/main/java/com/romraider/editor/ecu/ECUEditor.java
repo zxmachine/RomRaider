@@ -480,6 +480,13 @@ public class ECUEditor extends AbstractFrame {
         Table t = node.getTable();
         TableView v = getTableViewForTable(t);
         t.setTableView(v);
+        // the axes too: the logger's live values reach an axis through its table's view (TableUpdateHandler)
+        if (v instanceof Table3DView) {
+            ((Table3D) t).getXAxis().setTableView(((Table3DView) v).getXAxis());
+            ((Table3D) t).getYAxis().setTableView(((Table3DView) v).getYAxis());
+        } else if (v instanceof Table2DView) {
+            ((Table2D) t).getAxis().setTableView(((Table2DView) v).getAxis());
+        }
         try {
             if (t != null) {    
     	        v.populateTableVisual();

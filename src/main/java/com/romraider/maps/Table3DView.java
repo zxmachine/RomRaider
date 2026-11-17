@@ -55,9 +55,6 @@ public class Table3DView extends TableView {
     	yAxis = new Table1DView(table.getYAxis(), Table1DType.Y_AXIS);
     	xAxis.setAxisParent(this);
     	yAxis.setAxisParent(this);
-    	// the logger's live values reach an axis through its table's view (TableUpdateHandler)
-    	table.getXAxis().setTableView(xAxis);
-    	table.getYAxis().setTableView(yAxis);
     	
         verticalOverhead += 39;
         horizontalOverhead += 10;
