@@ -1,7 +1,10 @@
 # Reading and writing an ECU (Flash view)
 
-**Untested on hardware.** Everything here has run only against a simulated ECU in the unit tests. It has not
-been tried on a real ECU or car. Use it on a car only if you can recover an ECU yourself by other means.
+**Reading and comparing are tried on one ECU on a bench; writing is not tried on hardware yet.** Read and
+Compare (dry run) ran on a bench 16-bit Denso ECU (`wrx02`, `68HC16Y5`) through an OpenPort 2.0 with a 64-bit J2534
+driver: the whole 160 KB read in 57 s without a retry, equal byte for byte to a read by another host, and the
+compare listed the blocks that differ from another image. Writing has run only against the simulated ECU in the
+unit tests. Use it on a car only if you can recover an ECU yourself by other means.
 
 The Flash view (the third tab of the main window, Ctrl+3) reads and writes an ECU through a J2534 adapter, the way
 ECUFlash does. One flash method is supported so far:
@@ -24,7 +27,10 @@ The method is chosen by the `flashmethod` and `memmodel` of the ROM's definition
   in) or from a file. The confirmation shows the image's ROM ID, CRC-32 and checksum.
 
 The steps on the wire: OBD pin 9 is grounded; the user turns the ignition off and on; until the boot loader
-answers, pin 9 is released for 200 ms and grounded again and a handshake is sent at 9600 baud. The kernel goes up
+answers, pin 9 is released for 200 ms and grounded again and a handshake is sent at 9600 baud, about every 1.5 s.
+The boot loader starts only if pin 9 is grounded when the ECU powers up: an ignition turned on during one of the
+200 ms releases (about one time in seven) starts the program instead, and no handshake is answered. After five
+unanswered handshakes the view asks to turn the ignition off and on again, and goes on waiting. The kernel goes up
 in one scrambled frame, and then the kernel's own frames are used at its baud rate (the receive buffer is emptied
 before each request, and a frame that is not the reply to it, such as a late reply or an echo, is skipped). A
 write puts 12 V on pin 11, checks it through the kernel, switches the programming voltage through to the flash,
@@ -113,7 +119,9 @@ tests (`ant unittest`), then start RomRaider with `build/test` on the class path
 
 ## Not tried yet
 
-* Any real ECU, adapter or car: the timing of the boot loader entry, the baud rates, the pin voltages and the
-  adapter's handling of the raw K-line are as a host that has written these ECUs does them, but not checked here.
+* Writing to a real ECU, and any car: the boot loader entry, the kernel, the baud rates and the read path are
+  checked on a bench ECU (above); the programming voltage, erase and program, and the marker block are not.
+* The battery check reads the adapter's pin 16. On a bench whose OBD connector carries no battery on pin 16 it reads
+  about 0 V, and a write is refused below the minimum.
 * Adapters other than one that implements J2534 v04.04 programming voltage on pins 9 and 11.
 * Recovery from a real power loss in the middle of a write.

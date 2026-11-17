@@ -496,6 +496,16 @@ public class Wrx02SessionTest {
     }
 
     @Test
+    public void anUnansweredHandshakeAsksForTheIgnitionAgainOnce() throws Exception {
+        rig(KernelProfile.REPLY_80);
+        ecu.fault(Fault.LOADER_SILENT);
+        expectOpenFailure("boot loader never answered");
+        // the first instruction, then once the hint to cycle the ignition again
+        assertEquals(2, instructions.size());
+        assertTrue(instructions.get(1), instructions.get(1).contains("Turn the ignition OFF again"));
+    }
+
+    @Test
     public void noIgnitionCycleIsReported() throws Exception {
         rig(KernelProfile.REPLY_80);
         ecu.fault(Fault.NO_OPERATOR);

@@ -58,6 +58,8 @@ import com.romraider.io.j2534.api.J2534RawKLine;
  */
 final class Wrx02Session implements FlashSession {
     private static final byte[] HANDSHAKE = {0x4D, 0x00, (byte) 0xB3};
+    /** Unanswered handshakes (about 1.5 s each) after which the user is asked to cycle the ignition again. */
+    static final int RETRY_HINT_AFTER = 5;
 
     private static final String RETRY_UNCHANGED =
             "Turn the ignition off, check the adapter and the test-mode connector, and try again."
@@ -157,6 +159,7 @@ final class Wrx02Session implements FlashSession {
         long start = timing.now();
         long deadline = start + options.waitSeconds * 1000L;
         boolean inLoader = false;
+        int tries = 0;
         while (!inLoader && timing.now() < deadline) {
             checkStop("Turn the ignition off. Nothing was sent to the ECU but the handshake.");
             sleep(800);
@@ -169,12 +172,22 @@ final class Wrx02Session implements FlashSession {
             if (r.length > 0) log("  'M' reply: " + hex(r, r.length));
             inLoader = indexOf(r, HANDSHAKE) >= 0;
             out.progress("Waiting for the boot loader", (int) (timing.now() - start), (int) (deadline - start));
+            if (!inLoader && ++tries == RETRY_HINT_AFTER) {
+                // An ECU that starts while the pin is released for a handshake starts its program, not the boot
+                // loader, and then never answers: about one ignition-on in seven lands in such a release.
+                String again = "No answer yet. Turn the ignition OFF again, wait 3 seconds, then turn it ON:"
+                        + " an ignition turned on while pin " + options.reflashPin + " was released for the"
+                        + " handshake starts the program instead of the boot loader. Still waiting...";
+                log(again);
+                out.instruction(again);
+            }
         }
         if (!inLoader) {
             throw new FlashException("The boot loader never answered.",
                     "Check that the test-mode connector is connected, that the car's flash connector carries"
                     + " the adapter's pin 9 to the ECU, and that the ignition was turned off for 3 s and on"
-                    + " again while RomRaider waited. Then try again.");
+                    + " again while RomRaider waited. Then try again: an ignition turned on during one of the"
+                    + " short releases of pin 9 starts the program instead, and a second try usually works.");
         }
     }
 
