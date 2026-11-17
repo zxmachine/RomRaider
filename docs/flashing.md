@@ -20,6 +20,8 @@ OpenPort 2.0 with a 64-bit J2534 driver:
   next write restored the ECU.
 * Once in about ten sessions the kernel stopped in the middle of a reply during the backup read and answered
   nothing more: the session gave up with nothing written, and the next try went through. The cause is not known.
+* Both known kernels (below) ran a compare: the CRC-32 each gave of its own code in the ECU's RAM was the one
+  listed for it. The FastECU-style profile (62.5 kbaud) works against the ECU as the ECUFlash-style one does.
 
 Use it on a car only if you can recover an ECU yourself by other means.
 
@@ -74,6 +76,8 @@ start it normally.
 | The image must be 160 KB, with the right checksum, the reset words the boot loader starts and a valid "programmed" marker; checked before anything is sent | `Hc16Y5Layout.problems` |
 | A wrong checksum is fixed only on request: Fix checksum in the Flash view, or saving the ROM in the editor with a `wordsum16` checksum module | `Hc16Y5Layout.fixChecksum`, `ChecksumWORDSUM16` |
 | The definition's flash method and memory model must be this method's | `WritePolicy.checkDefinition` |
+| The kernel file must be a known kernel sent with its own profile, unless "Allow an unknown kernel" is ticked (unticked at every start, never saved); checked before anything is sent, for reads too | `WritePolicy.checkKernel`, `KnownKernel` |
+| A known kernel's code in the ECU's RAM must give the kernel's CRC-32 before the kernel is used: a damaged upload is refused with nothing written, and a different kernel left running is replaced | `Wrx02Session.kernelCodeMatches` |
 | The battery must hold at least the minimum (12.0 V by default; a minimum that is not a number refuses), checked at the start, again right before the programming voltage goes on, and before each block's erase | `WritePolicy.checkBattery` |
 | The ECU must hold the image's ROM ID, unless "Allow another ROM ID" is ticked or the ECU's ROM ID is erased (a recovery) | `WritePolicy.checkRomId` |
 | A whole read of the ECU is saved before it is overwritten, unless a read of the same ROM ID and the same content (the CRCs of its ten blocks) was saved in this program run; a second ECU with the same ROM ID gets its own | `Wrx02Session.write`, `BackupStore` |
@@ -115,6 +119,24 @@ The flashing kernel is not part of RomRaider. Name your own kernel file under "K
 | FastECU-style | request code + 0x40 | 62.5 kbaud | the kernel binary; the signature is put in place on upload |
 
 The file must be at most 4 KB. A kernel of the wrong profile is recognised by its reply code and named in the error.
+
+**Only known kernels are sent.** The kernel runs from RAM with the whole flash in reach. Nothing in the chip
+protects the boot loader's own block: a kernel can erase it (FastECU's kernel v0.02 does, on purpose), and an ECU
+whose boot loader is erased no longer starts and can't be written over the K-line again, only through its
+debug port. These two kernels erase and program only the application flash (their code has been read):
+
+| Kernel | Profile | File | CRC-32 of the code in RAM (0x20000-0x2065F, signature in place) |
+| --- | --- | --- | --- |
+| `OpenECU Subaru HC16 Kernel V1.06` (ECUFlash's `wrx02` kernel, the RAM image) | ECUFlash-style | 1636 bytes | `34D2A661` |
+| `FastECU Subaru HC16 Kernel v0.01` (`ssmk_mc68hc916y5.bin`) | FastECU-style | 1632 bytes | `98D28618` |
+
+A kernel file is known by its length and that CRC-32; the bytes after the code are the kernel's variables and
+may differ. Any other file is refused before anything is sent, unless "Allow an unknown kernel" is ticked. After
+the upload, and before a kernel left running from an earlier session is used again, the kernel is asked for the
+CRC-32 of its own code in RAM. That catches an upload damaged on the way, which the boot loader's one-byte
+checksum can miss: the session stops with nothing written (turn the ignition off, which clears the RAM, and try
+again). A different kernel left running is replaced: the boot loader is entered and the chosen kernel loaded. An
+unknown kernel that was allowed is not checked in RAM.
 
 ## Adapters
 

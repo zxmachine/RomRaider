@@ -128,6 +128,7 @@ public final class FlashPanel extends JPanel {
     private final JButton openFile = new JButton("Open file...");
     private final JCheckBox writing = new JCheckBox("Allow writing to the ECU (off at every start)");
     private final JCheckBox allowOtherId = new JCheckBox("Allow another ROM ID");
+    private final JCheckBox allowUnknownKernel = new JCheckBox("Allow an unknown kernel (off at every start)");
     private final JTextField minBattery = new JTextField(5);
     private final JLabel instruction = new JLabel(" ");
     private final JTextArea log = new JTextArea();
@@ -158,6 +159,10 @@ public final class FlashPanel extends JPanel {
         name(folder, "flash.folder");
         name(writing, "flash.writing");
         name(allowOtherId, "flash.allowOtherId");
+        name(allowUnknownKernel, "flash.allowUnknownKernel");
+        allowUnknownKernel.setToolTipText("<html>RomRaider uploads only kernels whose code it knows: they erase and"
+                + " program only the application flash.<br>Another kernel could erase the boot loader, and the ECU"
+                + " could then not be written again over the K-line.</html>");
         name(read, "flash.read");
         name(compare, "flash.compare");
         name(write, "flash.write");
@@ -194,7 +199,7 @@ public final class FlashPanel extends JPanel {
         row = row(p, row, "Kernel file:", kernelFile, button("Browse...", new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) { chooseFile(kernelFile, false); }
         }));
-        row = row(p, row, "Kernel profile:", profile, null);
+        row = row(p, row, "Kernel profile:", profile, allowUnknownKernel);
         row = row(p, row, "Folder for reads and logs:", folder, button("Browse...", new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) { chooseFile(folder, true); }
         }));
@@ -635,6 +640,7 @@ public final class FlashPanel extends JPanel {
         o.writingEnabled = writing.isSelected();
         o.minBatteryVolts = minBatteryVolts();
         o.kernelMayBeRunning = kernelMayBeRunning;
+        o.allowUnknownKernel = allowUnknownKernel.isSelected();     // never saved
         return o;
     }
 

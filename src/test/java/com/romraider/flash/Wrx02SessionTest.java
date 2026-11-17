@@ -72,6 +72,7 @@ public class Wrx02SessionTest {
         backups = new BackupStore(folder.newFolder("backups"));
         options = new FlashOptions();
         options.writingEnabled = true;
+        options.knownKernels = Arrays.asList(KnownKernel.of("made-up kernel", kernel, kernelFile.length));
         cancel = new CancelToken();
     }
 
@@ -639,6 +640,80 @@ public class Wrx02SessionTest {
         }
         assertEquals("no new reset", resets, ecu.resets);
         assertTrue(contains("still answers"));
+        assertTrue(contains("the same"));
+    }
+
+    // ---- the kernel: only known kernels, checked in RAM
+
+    @Test
+    public void anUnknownKernelIsRefusedBeforeAnythingIsSent() throws Exception {
+        rig(KernelProfile.REPLY_80);
+        options.knownKernels = KnownKernel.all();
+        try {
+            open().close();
+            fail("an unknown kernel was used");
+        } catch (FlashException e) {
+            assertEquals(FlashState.UNCHANGED, e.getFlashState());
+            assertTrue(e.getMessage(), e.getMessage().contains("not a kernel RomRaider knows"));
+            assertTrue(e.getNextStep().contains("Allow an unknown kernel"));
+        }
+        assertEquals("the ECU never saw a handshake", 0, ecu.resets);
+        assertFalse(ecu.uploadMatched);
+        assertTrue(ecu.events.isEmpty());
+    }
+
+    @Test
+    public void anUnknownKernelIsUsedWhenAllowedAndNotChecked() throws Exception {
+        rig(KernelProfile.REPLY_80);
+        options.knownKernels = KnownKernel.all();
+        options.allowUnknownKernel = true;
+        FlashSession s = open();
+        try {
+            assertArrayEquals(original, s.read());
+        } finally {
+            s.close();
+        }
+        assertTrue(contains("not a known kernel"));
+        assertTrue(contains("not checked"));
+    }
+
+    @Test
+    public void aKernelDamagedOnTheWayIsRefusedBeforeAnythingIsWritten() throws Exception {
+        rig(KernelProfile.REPLY_80);
+        ecu.fault(Fault.KERNEL_RAM_DAMAGED);
+        byte[] image = changed(0x2A000);
+        FlashSession s = open();
+        try {
+            s.write(write(image));
+            fail("a damaged kernel was used");
+        } catch (FlashException e) {
+            assertEquals(FlashState.UNCHANGED, e.getFlashState());
+            assertTrue(e.getMessage(), e.getMessage().contains("not the kernel file"));
+        } finally {
+            s.close();
+        }
+        assertTrue(contains("DIFFERENT"));
+        assertTrue(ecu.erased.isEmpty());
+        assertTrue(ecu.programmed.isEmpty());
+        assertFalse(ecu.pinPowered(11));
+        assertArrayEquals(original, ecu.image());
+    }
+
+    @Test
+    public void aKernelLeftRunningThatIsNotTheFileIsLoadedAgain() throws Exception {
+        rig(KernelProfile.REPLY_80);
+        open().close();
+        ecu.damageKernelRam();
+        int resets = ecu.resets;
+        options.kernelMayBeRunning = true;
+        FlashSession s = open();
+        try {
+            assertTrue(s.compare(original).isSame());
+        } finally {
+            s.close();
+        }
+        assertTrue("the boot loader was entered again", ecu.resets > resets);
+        assertTrue(contains("not the chosen kernel file"));
     }
 
     // ---- the program ends while a write runs (review A1)

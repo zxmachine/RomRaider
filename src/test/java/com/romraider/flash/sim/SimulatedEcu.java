@@ -90,7 +90,12 @@ public final class SimulatedEcu implements J2534 {
         /** The kernel sets the flash enable but its reply is lost. */
         LOSE_ENABLE_REPLY,
         /** The adapter is lost (unplugged) after commit number {@link #dropAfterCommits}: every call fails. */
-        ADAPTER_LOST
+        ADAPTER_LOST,
+        /**
+         * The kernel arrives with one byte of its code changed (a damage the
+         * boot loader's checksum missed), and runs all the same.
+         */
+        KERNEL_RAM_DAMAGED
     }
 
     /** What the ECU is doing. */
@@ -166,6 +171,8 @@ public final class SimulatedEcu implements J2534 {
     public final List<ConfigItem> config = new ArrayList<ConfigItem>();
     public boolean bootBlockTouched;
     public boolean uploadMatched;
+    /** The kernel as the boot loader left it in RAM at 0x20000 (read while the kernel runs). */
+    private byte[] kernelRam;
     public int resets;
     public int vppOnWhileErasing;
     public int framesDroppedWhileBusy;
@@ -207,6 +214,11 @@ public final class SimulatedEcu implements J2534 {
         byte[] img = new byte[Hc16Y5Layout.IMAGE_SIZE];
         for (int off = 0; off < img.length; off++) img[off] = flash[Hc16Y5Layout.address(off)];
         return img;
+    }
+
+    /** Changes one byte of the running kernel's code in RAM, as another kernel there would differ. */
+    public synchronized void damageKernelRam() {
+        if (kernelRam != null) kernelRam[0x100] ^= 0x01;
     }
 
     public synchronized boolean bootBlockIntact() {
@@ -567,6 +579,11 @@ public final class SimulatedEcu implements J2534 {
             state = State.HUNG;
             return;
         }
+        kernelRam = ram;
+        if (faults.contains(Fault.KERNEL_RAM_DAMAGED)) {
+            kernelRam[0x100] ^= 0x01;
+            event("boot loader: one byte of the kernel's code arrived changed");
+        }
         event("boot loader: kernel loaded and started");
         state = State.KERNEL;
         flashEnabled = false;
@@ -797,6 +814,9 @@ public final class SimulatedEcu implements J2534 {
         if (a >= 0 && a < flash.length && (a < 0x20000 || a >= 0x28000)) return flash[a] & 0xFF;
         if (a >= Hc16Y5Layout.BOOT_BLOCK && a < Hc16Y5Layout.BOOT_BLOCK + bootBlock.length) {
             return bootBlock[a - Hc16Y5Layout.BOOT_BLOCK] & 0xFF;
+        }
+        if (state == State.KERNEL && kernelRam != null && a >= 0x20000 && a < 0x20000 + kernelRam.length) {
+            return kernelRam[a - 0x20000] & 0xFF;
         }
         return 0;
     }

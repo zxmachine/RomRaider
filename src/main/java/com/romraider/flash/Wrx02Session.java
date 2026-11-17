@@ -74,6 +74,10 @@ final class Wrx02Session implements FlashSession {
     private final J2534RawKLine line;
     private final KernelLink link;
     private EcuIdentity identity;
+    /** The known kernel the kernel file is; null for an unknown kernel the user allowed. */
+    private KnownKernel known;
+    /** The running kernel's code has been checked against the kernel file. */
+    private boolean kernelChecked;
     private volatile boolean writing;
     private volatile boolean flashEnableSent;
     private volatile boolean shutdown;
@@ -107,6 +111,9 @@ final class Wrx02Session implements FlashSession {
     }
 
     private void start() throws FlashException {
+        known = WritePolicy.checkKernel(ctx.getKernel(), options.knownKernels, options.allowUnknownKernel);
+        log(known != null ? "kernel file: " + known.getName()
+                : "kernel file: not a known kernel, used because \"Allow an unknown kernel\" is ticked");
         try {
             line.open();
         } catch (RuntimeException e) {
@@ -116,11 +123,43 @@ final class Wrx02Session implements FlashSession {
         }
         battery();
         if (options.kernelMayBeRunning && kernelAnswers()) {
-            log("the kernel from the last session still answers; not loading it again");
-            return;
+            if (kernelCodeMatches()) {
+                kernelChecked = true;
+                log("the kernel from the last session still answers; not loading it again");
+                return;
+            }
+            log("the kernel still answering is not the chosen kernel file; entering the boot loader to load it");
         }
         enterBootLoader();
         uploadKernel();
+    }
+
+    /**
+     * Whether the running kernel's code in RAM is the known kernel's, by the
+     * CRC-32 the kernel gives of it. An unknown kernel the user allowed is not
+     * checked (which of its bytes change while it runs is not known).
+     */
+    private boolean kernelCodeMatches() throws FlashException {
+        if (known == null) {
+            log("the kernel is not a known one: its code in RAM is not checked");
+            return true;
+        }
+        int n = known.getCodeLength();
+        long c;
+        try {
+            byte[] r = link.request(cat(new byte[] {0x02}, addr(KernelProfile.LOAD_ADDRESS),
+                    new byte[] {0, 0, (byte) (n >> 8), (byte) n}), 2000, profile.reply(0x02));
+            c = r.length == 5 && (r[0] & 0xFF) == profile.reply(0x02) ? be32(r, 1) : -1;
+        } catch (LinkException e) {
+            c = -1;
+        } catch (InterruptedException e) {
+            throw cancelled();
+        }
+        boolean same = c == known.getCodeCrc();
+        log(String.format("kernel code in RAM 0x%05X-0x%05X: CRC-32 %s, the file's %08X: %s",
+                KernelProfile.LOAD_ADDRESS, KernelProfile.LOAD_ADDRESS + n - 1,
+                c < 0 ? "not given" : String.format("%08X", c), known.getCodeCrc(), same ? "the same" : "DIFFERENT"));
+        return same;
     }
 
     /** Reads the battery voltage and reports it; NaN when the adapter can't. */
@@ -258,6 +297,15 @@ final class Wrx02Session implements FlashSession {
         }
         String version = new String(ver, 1, ver.length - 1, StandardCharsets.US_ASCII).replace("\0", "").trim();
         log("kernel: " + version);
+        if (!kernelChecked) {
+            if (!kernelCodeMatches()) {
+                throw new FlashException("The kernel running in the ECU is not the kernel file: the CRC-32 of its code"
+                        + " in RAM differs, or it gives none. The upload was damaged on the way.",
+                        "Nothing was written. Turn the ignition off (that clears the ECU's RAM) and try again."
+                        + " If it happens again, check the adapter, its cable and the OBD connector.");
+            }
+            kernelChecked = true;
+        }
         byte[] id = kreq(cat(new byte[] {0x03}, addr(Hc16Y5Layout.ROM_ID_ADDRESS),
                 new byte[] {0, (byte) Hc16Y5Layout.ROM_ID_LENGTH}), 2000, 0x03);
         if (id.length != Hc16Y5Layout.ROM_ID_LENGTH + 1) {

@@ -100,6 +100,38 @@ public final class WritePolicy {
     }
 
     /**
+     * The kernel file must be a kernel RomRaider knows, sent with its own
+     * profile, unless the user allowed an unknown one. Checked before anything
+     * is sent, for every session (a read uploads the kernel too).
+     *
+     * @return the known kernel, or null for an unknown kernel the user allowed
+     */
+    public static KnownKernel checkKernel(Kernel kernel, List<KnownKernel> known, boolean allowUnknown)
+            throws FlashException {
+        KnownKernel k = KnownKernel.find(kernel, known);
+        if (k != null) {
+            if (k.getProfile() != kernel.getProfile()) {
+                throw new FlashException(String.format(
+                        "The kernel file is the %s, a kernel for the profile \"%s\", not \"%s\".",
+                        k.getName(), k.getProfile().getName(), kernel.getProfile().getName()),
+                        "Choose that kernel profile and try again.");
+            }
+            return k;
+        }
+        if (allowUnknown) return null;
+        StringBuilder names = new StringBuilder();
+        for (KnownKernel n : known) names.append(names.length() == 0 ? "" : "; ").append(n.getName());
+        throw new FlashException(String.format(
+                "The kernel file %s is not a kernel RomRaider knows (%d bytes, CRC-32 %08X as loaded, profile \"%s\").",
+                kernel.getSource(), kernel.size(), KnownKernel.crc(kernel.ramImage(), Integer.MAX_VALUE),
+                kernel.getProfile().getName()),
+                "Nothing was sent. The kernel runs with the whole flash in reach, the boot loader's own block"
+                + " included, and an ECU whose boot loader is erased can't be written again over the K-line."
+                + " Choose a known kernel (" + (names.length() == 0 ? "none" : names) + ") or check the kernel"
+                + " profile. To use this kernel all the same, tick \"Allow an unknown kernel\" (off at every start).");
+    }
+
+    /**
      * The ECU must hold the image's ROM ID, unless the user allowed another
      * one, or its ROM ID is blank (an earlier write stopped part way).
      */

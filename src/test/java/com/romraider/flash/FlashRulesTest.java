@@ -169,6 +169,64 @@ public class FlashRulesTest {
     }
 
     @Test
+    public void onlyKnownKernelsAreUploadedUnlessAllowed() throws FlashException {
+        byte[] file = SimulatedEcu.makeKernel(KernelProfile.REPLY_80, 7);
+        Kernel k = new Kernel(file, KernelProfile.REPLY_80, "test");
+        KnownKernel known = KnownKernel.of("test kernel", k, file.length - 4);   // the last 4 bytes are variables
+        List<KnownKernel> list = Arrays.asList(known);
+        assertSame(known, WritePolicy.checkKernel(k, list, false));
+
+        byte[] tail = file.clone();
+        tail[file.length - 1] ^= 0x01;
+        assertSame("a variable after the code may differ", known,
+                WritePolicy.checkKernel(new Kernel(tail, KernelProfile.REPLY_80, "test"), list, false));
+
+        byte[] code = file.clone();
+        code[0x100] ^= 0x01;
+        Kernel other = new Kernel(code, KernelProfile.REPLY_80, "other");
+        try {
+            WritePolicy.checkKernel(other, list, false);
+            fail("a kernel with other code was taken");
+        } catch (FlashException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("not a kernel RomRaider knows"));
+            assertTrue(e.getNextStep().contains("Allow an unknown kernel"));
+            assertTrue(e.getNextStep().contains("test kernel"));
+        }
+        assertNull("allowed, and not known", WritePolicy.checkKernel(other, list, true));
+
+        byte[] longer = Arrays.copyOf(file, file.length + 1);
+        try {
+            WritePolicy.checkKernel(new Kernel(longer, KernelProfile.REPLY_80, "longer"), list, false);
+            fail("a kernel of another length was taken");
+        } catch (FlashException e) {
+            assertTrue(e.getMessage().contains("not a kernel RomRaider knows"));
+        }
+
+        KnownKernel forTheOtherProfile = new KnownKernel("test kernel 40", KernelProfile.REPLY_40,
+                known.getFileLength(), known.getCodeLength(), known.getCodeCrc());
+        try {
+            WritePolicy.checkKernel(k, Arrays.asList(forTheOtherProfile), true);
+            fail("a known kernel was sent with the wrong profile");
+        } catch (FlashException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("a kernel for the profile"));
+        }
+    }
+
+    @Test
+    public void theKnownKernelsAreTheTwoWhoseCodeWasRead() {
+        assertEquals(Arrays.asList(KnownKernel.ECUFLASH_V106, KnownKernel.FASTECU_V001), KnownKernel.all());
+        assertSame(KernelProfile.REPLY_80, KnownKernel.ECUFLASH_V106.getProfile());
+        assertSame(KernelProfile.REPLY_40, KnownKernel.FASTECU_V001.getProfile());
+        for (KnownKernel k : KnownKernel.all()) {
+            assertEquals("code 0x20000-0x2065F; variables from 0x20660", 0x660, k.getCodeLength());
+            assertTrue(k.getFileLength() >= k.getCodeLength());
+            assertTrue(k.getFileLength() <= KernelProfile.MAX_KERNEL_SIZE);
+        }
+        assertTrue(new FlashOptions().knownKernels == KnownKernel.all());
+        assertFalse("off unless ticked", new FlashOptions().allowUnknownKernel);
+    }
+
+    @Test
     public void writeRules() throws FlashException {
         List<FlashBlock> b = Hc16Y5Layout.blocks();
         List<FlashBlock> order = WritePolicy.writeOrder(Arrays.asList(b.get(9), b.get(1), b.get(4)));

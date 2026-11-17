@@ -19,6 +19,8 @@
 
 package com.romraider.flash;
 
+import java.util.List;
+
 /** The settings a flash session runs with. Writing is off unless switched on. */
 public final class FlashOptions {
     /** Writing is allowed at all (the settings switch; off by default). */
@@ -41,6 +43,10 @@ public final class FlashOptions {
      * boot loader only when it does not answer.
      */
     public boolean kernelMayBeRunning = false;
+    /** A kernel file that is not one of {@link #knownKernels} may be uploaded (off at every start, never saved). */
+    public boolean allowUnknownKernel = false;
+    /** The kernels a session uploads without {@link #allowUnknownKernel}. */
+    public List<KnownKernel> knownKernels = KnownKernel.all();
 
     public FlashOptions copy() {
         FlashOptions o = new FlashOptions();
@@ -52,6 +58,8 @@ public final class FlashOptions {
         o.pulseMillis = pulseMillis;
         o.waitSeconds = waitSeconds;
         o.kernelMayBeRunning = kernelMayBeRunning;
+        o.allowUnknownKernel = allowUnknownKernel;
+        o.knownKernels = knownKernels;
         return o;
     }
 }
