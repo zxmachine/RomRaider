@@ -196,6 +196,8 @@ public class Settings implements Serializable {
     private Color highlightColor = new Color(27, 161, 226);
     private Color liveValueColor = new Color (0, 255, 0);
     private Color curLiveValueColor = new Color (255, 0, 255);
+    public static final double MAX_LIVE_TRACE_SECONDS = 600;
+    private double liveTraceSeconds = 5;
 
     private Color decreaseBorder = new Color(0, 0, 255);
     private Color increaseBorder = new Color(255, 0, 0);
@@ -439,6 +441,15 @@ public class Settings implements Serializable {
 
     public Color getCurLiveValueColor() {
         return this.curLiveValueColor;
+    }
+
+    /** How many seconds of the live trace a table shows behind its current point (com.romraider.maps.trace). */
+    public double getLiveTraceSeconds() {
+        return liveTraceSeconds;
+    }
+
+    public void setLiveTraceSeconds(double seconds) {
+        this.liveTraceSeconds = Math.max(0, Math.min(MAX_LIVE_TRACE_SECONDS, seconds));
     }
 
     public void setCurLiveValueColor(Color curLiveValueColor) {

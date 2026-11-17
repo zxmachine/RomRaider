@@ -28,6 +28,10 @@ import javax.swing.border.EmptyBorder;
 
 import com.romraider.Settings;
 import com.romraider.maps.Table1DView.Table1DType;
+import com.romraider.maps.trace.AxisPosition;
+import com.romraider.maps.trace.TraceLayout;
+import com.romraider.maps.trace.TraceOverlay;
+import com.romraider.maps.trace.TracePanel;
 
 public class Table2DView extends TableView {
     private static final long serialVersionUID = -7684570967109324784L;
@@ -38,6 +42,12 @@ public class Table2DView extends TableView {
         super(table);
         axis = new Table1DView(table.getAxis(), Table1DType.X_AXIS);
         axis.setAxisParent(this);
+        ((TracePanel) centerPanel).setOverlay(new TraceOverlay(this, liveTrace, new TraceLayout() {
+            @Override public int columns() { return data == null ? 0 : data.length; }
+            @Override public int rows() { return data == null || data.length == 0 ? 0 : 1; }
+            @Override public double columnCentre(int i) { return data[i].getBounds().getCenterX(); }
+            @Override public double rowCentre(int j) { return data[0].getBounds().getCenterY(); }
+        }));
         verticalOverhead += 18;
     }
 
@@ -263,6 +273,14 @@ public class Table2DView extends TableView {
             data[axis.getPreviousLiveDataIndex()].setPreviousLiveDataTrace(true);
             data[axis.getLiveDataIndex()].setPreviousLiveDataTrace(false);
             data[axis.getLiveDataIndex()].setLiveDataTrace(true);
+            // the live trace (com.romraider.maps.trace): where the ECU's lookup stands, and its value
+            double fx = axis.getLivePosition();
+            if (!Double.isNaN(fx)) {
+                double[] values = new double[data.length];
+                for (int i = 0; i < data.length; i++) values[i] = data[i].getDataCell().getRealValue();
+                liveTrace.add(System.currentTimeMillis(), fx, 0, AxisPosition.interpolate(values, fx));
+                centerPanel.repaint();
+            }
         }
     }
 

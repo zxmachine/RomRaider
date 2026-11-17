@@ -68,6 +68,7 @@ import com.romraider.editor.ecu.ECUEditorManager;
 import com.romraider.maps.DataCell;
 import com.romraider.maps.Scale;
 import com.romraider.maps.Table;
+import com.romraider.maps.trace.TrailSeconds;
 import com.romraider.maps.Table1D;
 import com.romraider.maps.Table1DView;
 import com.romraider.maps.Table3D;
@@ -253,6 +254,14 @@ public class TableToolBar extends JToolBar implements MouseListener, ItemListene
 
         liveDataPanel.add(overlayLog);
         liveDataPanel.add(clearOverlay);
+        // the live trace's length (com.romraider.maps.trace)
+        liveDataPanel.add(new TrailSeconds(new Runnable() {
+            @Override
+            public void run() {
+                Table t = getSelectedTable();
+                if (t != null && t.getTableView() != null) t.getTableView().repaint();
+            }
+        }));
         //liveDataPanel.add(liveDataValue);
         this.add(liveDataPanel);
         overlayLog.setEnabled(false);

@@ -23,6 +23,7 @@ import java.awt.BorderLayout;
 
 import javax.swing.JLabel;
 import javax.swing.border.EmptyBorder;
+import com.romraider.maps.trace.AxisPosition;
 import com.romraider.util.NumberUtil;
 
 public class Table1DView extends TableView {
@@ -30,6 +31,7 @@ public class Table1DView extends TableView {
 	private static final long serialVersionUID = -8747180767803835631L;
 	private Table1D table;
 	private Table1DType type;
+	private double livePosition = Double.NaN;
 	
     public enum Table1DType {
     	NO_AXIS,
@@ -267,6 +269,27 @@ public class Table1DView extends TableView {
         return data[index].getText();
     }
 
+    /** The fractional position of the last live value on this axis (AxisPosition), NaN before one came. */
+    public double getLivePosition() {
+        return livePosition;
+    }
+
+    private double[] axisValues() {
+        double[] values = new double[data.length];
+        for (int i = 0; i < data.length; i++) {
+            if (table.isStaticDataTable() && null != data[i].getStaticText()) {
+                try {
+                    values[i] = Double.parseDouble(data[i].getStaticText());
+                } catch (NumberFormatException e) {
+                    values[i] = Double.NaN;
+                }
+            } else {
+                values[i] = data[i].getDataCell().getRealValue();
+            }
+        }
+        return values;
+    }
+
     @Override
     public void highlightLiveData(String liveVal) {
         if (getOverlayLog()) {
@@ -292,14 +315,16 @@ public class Table1DView extends TableView {
                     currentValue = data[i].getDataCell().getRealValue();
                 }
                 
-            	if(Math.abs(currentValue - liveValue) < currentErrorToLiveValue) 
+            	if(Math.abs(currentValue - liveValue) < currentErrorToLiveValue)
             	{
             		currentErrorToLiveValue = Math.abs(currentValue - liveValue);
             		startIdx = i;
-            		
+
             		if(currentErrorToLiveValue <= 0.001) break;
             	}
             }
+            // where the ECU's lookup stands on this axis, for the live trace (com.romraider.maps.trace)
+            livePosition = AxisPosition.of(axisValues(), liveValue);
 
             setLiveDataIndex(startIdx);
             DataCellView cellp = data[getPreviousLiveDataIndex()];

@@ -214,6 +214,9 @@ public final class DOMSettingsUnmarshaller {
             } else if (n.getNodeType() == ELEMENT_NODE && n.getNodeName().equalsIgnoreCase("colors")) {
                 settings = unmarshallColors(n, settings);
 
+            } else if (n.getNodeType() == ELEMENT_NODE && n.getNodeName().equalsIgnoreCase("livetrace")) {
+                settings.setLiveTraceSeconds(unmarshallAttribute(n, "seconds", 5.0));
+
             }
         }
         return settings;

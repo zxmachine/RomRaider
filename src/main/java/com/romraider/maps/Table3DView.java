@@ -34,6 +34,10 @@ import com.romraider.Settings;
 import com.romraider.editor.ecu.ECUEditorManager;
 import com.romraider.logger.ecu.ui.swing.vertical.VerticalLabelUI;
 import com.romraider.maps.Table1DView.Table1DType;
+import com.romraider.maps.trace.AxisPosition;
+import com.romraider.maps.trace.TraceLayout;
+import com.romraider.maps.trace.TraceOverlay;
+import com.romraider.maps.trace.TracePanel;
 import com.romraider.util.NumberUtil;
 
 public class Table3DView extends TableView {
@@ -55,7 +59,13 @@ public class Table3DView extends TableView {
     	yAxis = new Table1DView(table.getYAxis(), Table1DType.Y_AXIS);
     	xAxis.setAxisParent(this);
     	yAxis.setAxisParent(this);
-    	
+    	((TracePanel) centerPanel).setOverlay(new TraceOverlay(this, liveTrace, new TraceLayout() {
+    	    @Override public int columns() { return data == null ? 0 : data.length; }
+    	    @Override public int rows() { return data == null || data.length == 0 ? 0 : data[0].length; }
+    	    @Override public double columnCentre(int i) { return data[i][0].getBounds().getCenterX(); }
+    	    @Override public double rowCentre(int j) { return data[0][j].getBounds().getCenterY(); }
+    	}));
+
         verticalOverhead += 39;
         horizontalOverhead += 10;
     }
@@ -561,11 +571,29 @@ public class Table3DView extends TableView {
             data[xp][yp].setPreviousLiveDataTrace(true);
             data[x][y].setPreviousLiveDataTrace(false);
             data[x][y].setLiveDataTrace(true);
+            traceLive();
         }
+    }
+
+    /** Adds the point where the ECU's lookup stands, and the value it reads there, to the live trace. */
+    private void traceLive() {
+        double fx = xAxis.getLivePosition();
+        double fy = yAxis.getLivePosition();
+        if (data == null || Double.isNaN(fx) || Double.isNaN(fy)) return;
+        double[][] values = new double[data.length][data.length == 0 ? 0 : data[0].length];
+        for (int x = 0; x < values.length; x++) {
+            for (int y = 0; y < values[x].length; y++) {
+                values[x][y] = data[x][y].getDataCell().getRealValue();
+            }
+        }
+        liveTrace.add(System.currentTimeMillis(), fx, fy, AxisPosition.interpolate(values, fx, fy));
+        centerPanel.repaint();
     }
 
     @Override
     public void clearLiveDataTrace() {
+        liveTrace.clear();
+        centerPanel.repaint();
         xAxis.clearLiveDataTrace();
         yAxis.clearLiveDataTrace();
         for (int x = 0; x < table.getSizeX(); x++) {

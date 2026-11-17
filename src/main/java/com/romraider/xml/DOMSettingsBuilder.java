@@ -271,6 +271,11 @@ public final class DOMSettingsBuilder {
         cellSize.setAttribute("width", String.valueOf(((int) settings.getCellSize().getWidth())));
         tableDisplay.appendChild(cellSize);
 
+        // the live trace's length (com.romraider.maps.trace)
+        IIOMetadataNode liveTrace = new IIOMetadataNode("livetrace");
+        liveTrace.setAttribute("seconds", String.valueOf(settings.getLiveTraceSeconds()));
+        tableDisplay.appendChild(liveTrace);
+
         // colors
         IIOMetadataNode colors = new IIOMetadataNode("colors");
         // max

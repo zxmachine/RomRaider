@@ -48,6 +48,8 @@ import org.apache.log4j.Logger;
 
 import com.romraider.Settings;
 import com.romraider.editor.ecu.ECUEditorManager;
+import com.romraider.maps.trace.LiveTrace;
+import com.romraider.maps.trace.TracePanel;
 import com.romraider.swing.TableFrame;
 import com.romraider.swing.TableToolBar;
 import com.romraider.util.NumberUtil;
@@ -67,7 +69,9 @@ public abstract class TableView extends JPanel implements Serializable {
     protected boolean hide; //Hide the actual data
     protected BorderLayout borderLayout = new BorderLayout();
     protected GridLayout centerLayout = new GridLayout(1, 1, 0, 0);
-    protected JPanel centerPanel = new JPanel(centerLayout);
+    protected JPanel centerPanel = new TracePanel(centerLayout);
+    /** Where the ECU's lookup has stood while the logger ran (com.romraider.maps.trace) */
+    protected final LiveTrace liveTrace = new LiveTrace();
     protected JLabel tableLabel;
     protected int verticalOverhead = 103;
     protected int horizontalOverhead = 2;
@@ -921,6 +925,8 @@ public abstract class TableView extends JPanel implements Serializable {
             cell.setLiveDataTrace(false);
             cell.setPreviousLiveDataTrace(false);
         }
+        liveTrace.clear();
+        centerPanel.repaint();
     }
 
 
