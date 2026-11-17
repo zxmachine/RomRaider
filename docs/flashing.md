@@ -9,8 +9,15 @@ OpenPort 2.0 with a 64-bit J2534 driver:
   backup read, the confirmation, 12 V on pin 11 checked through the kernel (inside the window), the marker block
   erased first and programmed last, every 4 KB programmed in one pulse, all blocks verified ("flash correct"); the
   ECU's program ran afterwards and passed its own bench test. An image the ECU already holds is not written.
-* A power cut during a write (right after a block's erase): the view reported the ECU as partly written; the ECU
-  did not start the partly written program (the marker block was erased); a second write restored it.
+* A write of nine blocks (another build, its code moved): about 2.5 minutes with the backup read, "flash correct".
+* A power cut during a write, twice: right after a block's erase, and in the middle of programming the marker block
+  (the last step of a nine-block write). Each time the view reported the ECU as partly written, the ECU did not
+  start the partly written program (the marker block was erased), and a second write restored it.
+* The program killed (as by the task manager: no shutdown hook) right after the programming voltage and the flash
+  enable went on: the kernel went on with the erase it had begun and kept the flash enabled, but when the adapter
+  was opened again the ECU read about 1.2 V on pin 11, not 12 V. Whether the adapter switched it off by itself or
+  the next open did is not known (the vendor's kernel driver tells the adapter nothing when a handle closes). The
+  next write restored the ECU.
 * Once in about ten sessions the kernel stopped in the middle of a reply during the backup read and answered
   nothing more: the session gave up with nothing written, and the next try went through. The cause is not known.
 
@@ -129,9 +136,8 @@ tests (`ant unittest`), then start RomRaider with `build/test` on the class path
 
 ## Not tried yet
 
-* Any car. On the bench (above) everything but these has run: a write of many blocks (the code moved), what the
-  adapter's pins do when the program is killed or USB is pulled during a write, and the cause of the kernel's one
-  stop in the middle of a reply.
+* Any car. Not settled on the bench (above): pin 11 between a killed program and the next open, and with USB pulled
+  during a write (a scope on pin 11 would show it); the cause of the kernel's one stop in the middle of a reply.
 * The battery check reads the adapter's pin 16, which a car feeds from the battery all the time. A bench that feeds
   pin 16 from the ECU's switched supply reads about 0 V while the ECU is off, and a write is refused below the
   minimum: start with the ECU on, and turn it off and on only when the view asks (as a user does with the ignition).
