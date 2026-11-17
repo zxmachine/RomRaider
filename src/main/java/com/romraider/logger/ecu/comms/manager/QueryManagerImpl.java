@@ -225,6 +225,11 @@ public final class QueryManagerImpl implements QueryManager {
                 return true;
             }
         }
+        if (!settings.isSerialFallback()) {
+            // J2534 only: keep the library for the next try, and never write
+            // to whatever device sits on a serial port
+            return false;
+        }
         settings.setJ2534Device("");
         // Finally try Serial
         if (initConnection(module, settings.getLoggerPort())) {

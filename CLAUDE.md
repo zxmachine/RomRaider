@@ -35,7 +35,13 @@ real ECU from an agent session, and never commit a kernel or an ECU image.
 With JavaFX, add `--module-path C:\Tools\javafx-sdk-25.0.5\lib --add-modules javafx.swing,javafx.web` and
 `--enable-native-access=javafx.graphics,javafx.web,javafx.media,ALL-UNNAMED`. RomRaider reads a `settings.xml` in the
 working folder before the user's own: for a test run, start it from a scratch folder holding a `settings.xml` and a
-copy of `i18n/`.
+copy of `i18n/`. Add `-Duser.home=<scratch>` so the log (`user.home\.RomRaider\rr_system.log`, with
+`-Dlog4j.configuration=file:/<fork>/lib/log4j.properties`) and anything else stays there too.
+
+The logger falls back to a serial port after a failed J2534 init and picks the first port present when the saved one
+is missing, then writes SSM bytes to it. On a computer where a serial port drives something else (a relay board),
+set `<serial ... fallback="false"/>` in the logger settings and name the J2534 DLL in
+`<protocol ... library="<path>"/>`: the logger then stays on that DLL and never opens a serial port.
 
 ## Packaging
 

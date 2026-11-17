@@ -209,6 +209,7 @@ public class Settings implements Serializable {
 
     private String loggerPort;
     private String loggerPortDefault = "";
+    private boolean serialFallback = true; // false: a failed J2534 init never falls back to a serial port
     private static String loggerProtocol = SSM;
     private static String loggerDefinitionFilePath = "";
     private static String loggerProfileFilePath = "";
@@ -720,6 +721,14 @@ public class Settings implements Serializable {
 
     public boolean getRefreshMode() {
         return loggerRefreshMode;
+    }
+
+    public void setSerialFallback(boolean serialFallback) {
+        this.serialFallback = serialFallback;
+    }
+
+    public boolean isSerialFallback() {
+        return serialFallback;
     }
 
     public void setTargetModule(String string) {

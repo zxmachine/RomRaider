@@ -352,6 +352,7 @@ public final class DOMSettingsBuilder {
         IIOMetadataNode serial = new IIOMetadataNode("serial");
         serial.setAttribute("port", validateAttr(settings.getLoggerPortDefault()));
         serial.setAttribute("refresh", String.valueOf(settings.getRefreshMode()));
+        serial.setAttribute("fallback", String.valueOf(settings.isSerialFallback()));
         loggerSettings.appendChild(serial);
 
         // Protocol connection
