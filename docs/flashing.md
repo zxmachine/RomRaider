@@ -1,10 +1,20 @@
 # Reading and writing an ECU (Flash view)
 
-**Reading and comparing are tried on one ECU on a bench; writing is not tried on hardware yet.** Read and
-Compare (dry run) ran on a bench 16-bit Denso ECU (`wrx02`, `68HC16Y5`) through an OpenPort 2.0 with a 64-bit J2534
-driver: the whole 160 KB read in 57 s without a retry, equal byte for byte to a read by another host, and the
-compare listed the blocks that differ from another image. Writing has run only against the simulated ECU in the
-unit tests. Use it on a car only if you can recover an ECU yourself by other means.
+**Tried on one ECU on a bench, not on a car.** On a bench 16-bit Denso ECU (`wrx02`, `68HC16Y5`), through an
+OpenPort 2.0 with a 64-bit J2534 driver:
+
+* Read: the whole 160 KB in 57 s without a retry, equal byte for byte to a read by another host.
+* Compare: the blocks that differ from another image listed, nothing written.
+* Write: an image one byte apart from the ECU's (two blocks with the checksum word), then the ECU's own image back:
+  backup read, the confirmation, 12 V on pin 11 checked through the kernel (inside the window), the marker block
+  erased first and programmed last, every 4 KB programmed in one pulse, all blocks verified ("flash correct"); the
+  ECU's program ran afterwards and passed its own bench test. An image the ECU already holds is not written.
+* A power cut during a write (right after a block's erase): the view reported the ECU as partly written; the ECU
+  did not start the partly written program (the marker block was erased); a second write restored it.
+* Once in about ten sessions the kernel stopped in the middle of a reply during the backup read and answered
+  nothing more: the session gave up with nothing written, and the next try went through. The cause is not known.
+
+Use it on a car only if you can recover an ECU yourself by other means.
 
 The Flash view (the third tab of the main window, Ctrl+3) reads and writes an ECU through a J2534 adapter, the way
 ECUFlash does. One flash method is supported so far:
@@ -119,8 +129,9 @@ tests (`ant unittest`), then start RomRaider with `build/test` on the class path
 
 ## Not tried yet
 
-* Writing to a real ECU, and any car: the boot loader entry, the kernel, the baud rates and the read path are
-  checked on a bench ECU (above); the programming voltage, erase and program, and the marker block are not.
+* Any car. On the bench (above) everything but these has run: a write of many blocks (the code moved), what the
+  adapter's pins do when the program is killed or USB is pulled during a write, and the cause of the kernel's one
+  stop in the middle of a reply.
 * The battery check reads the adapter's pin 16, which a car feeds from the battery all the time. A bench that feeds
   pin 16 from the ECU's switched supply reads about 0 V while the ECU is off, and a write is refused below the
   minimum: start with the ECU on, and turn it off and on only when the view asks (as a user does with the ignition).
