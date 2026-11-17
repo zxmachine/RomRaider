@@ -121,7 +121,8 @@ tests (`ant unittest`), then start RomRaider with `build/test` on the class path
 
 * Writing to a real ECU, and any car: the boot loader entry, the kernel, the baud rates and the read path are
   checked on a bench ECU (above); the programming voltage, erase and program, and the marker block are not.
-* The battery check reads the adapter's pin 16. On a bench whose OBD connector carries no battery on pin 16 it reads
-  about 0 V, and a write is refused below the minimum.
+* The battery check reads the adapter's pin 16, which a car feeds from the battery all the time. A bench that feeds
+  pin 16 from the ECU's switched supply reads about 0 V while the ECU is off, and a write is refused below the
+  minimum: start with the ECU on, and turn it off and on only when the view asks (as a user does with the ignition).
 * Adapters other than one that implements J2534 v04.04 programming voltage on pins 9 and 11.
 * Recovery from a real power loss in the middle of a write.
